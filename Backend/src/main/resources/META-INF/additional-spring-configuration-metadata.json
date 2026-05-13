@@ -1,0 +1,38 @@
+{
+  "properties": [
+    {
+      "name": "spring.flyway.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable Flyway database migrations.",
+      "defaultValue": true
+    },
+    {
+      "name": "jwt.secret",
+      "type": "java.lang.String",
+      "description": "Secret used to sign JWT tokens."
+    },
+    {
+      "name": "jwt.expiration",
+      "type": "java.lang.Long",
+      "description": "JWT expiration time in milliseconds."
+    },
+    {
+      "name": "ai.provider",
+      "type": "java.lang.String",
+      "description": "Active AI provider used by the correction service.",
+      "defaultValue": "openai"
+    },
+    {
+      "name": "openai.api.url",
+      "type": "java.lang.String",
+      "description": "OpenAI Responses API endpoint.",
+      "defaultValue": "https://api.openai.com/v1/responses"
+    },
+    {
+      "name": "openai.model",
+      "type": "java.lang.String",
+      "description": "OpenAI model used for essay correction.",
+      "defaultValue": "gpt-5.2"
+    }
+  ]
+}

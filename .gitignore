@@ -1,0 +1,76 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+!.env.sample
+
+# Java / Spring Boot
+target/
+*.class
+*.log
+*.pid
+*.hprof
+hs_err_pid*
+replay_pid*
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+
+# Node / Vite / React
+node_modules/
+dist/
+build/
+.vite/
+.vite-cache/
+coverage/
+*.tsbuildinfo
+
+# Logs
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# IDEs and editors
+.idea/
+.vscode/
+*.iws
+*.iml
+*.ipr
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache/
+
+# Repository automation
+!.github/
+!.github/**
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local databases and generated files
+*.db
+*.sqlite
+*.sqlite3
+uploads/
+tmp/
+temp/
+
+# Test and tooling caches
+.pytest_cache/
+.cache/
+.eslintcache
+.nyc_output/
+
+# Keep source target/build directories if intentionally created under src
+!**/src/main/**/target/
+!**/src/test/**/target/
+!**/src/main/**/build/
+!**/src/test/**/build/
