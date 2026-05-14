@@ -1,13 +1,21 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { listarProvas, submeterRedacao } from '../api/candidato'
 import Button from '../components/Button'
 import Card from '../components/Card'
 import EmptyState from '../components/EmptyState'
+import FolhaRedacao from '../components/FolhaRedacao'
 import Input from '../components/Input'
 import SkeletonLoader from '../components/SkeletonLoader'
 
 const MAX_TEXTO = 5000
+const MIN_LINHAS = 5
+const LINHAS_PLACEHOLDER = 30
+const TEMAS_SUGERIDOS = [
+  'Tecnologia e cidadania',
+  'Gestao publica eficiente',
+  'Educacao e inclusao social',
+]
 
 function SubmissaoRedacao() {
   const navigate = useNavigate()
@@ -15,7 +23,10 @@ function SubmissaoRedacao() {
   const provaInicial = searchParams.get('idProva') || ''
   const [provas, setProvas] = useState([])
   const [idProva, setIdProva] = useState(provaInicial)
+  const [tema, setTema] = useState('')
+  const [titulo, setTitulo] = useState('')
   const [texto, setTexto] = useState('')
+  const [linhasUtilizadas, setLinhasUtilizadas] = useState(0)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -26,6 +37,13 @@ function SubmissaoRedacao() {
     [idProva, provas],
   )
 
+  const totalLinhas = provaSelecionada?.quantidadeLinhas || LINHAS_PLACEHOLDER
+  const textoVazio = texto.trim().length === 0
+  const temaVazio = tema.trim().length === 0
+  const tituloVazio = titulo.trim().length === 0
+  const linhasInsuficientes = linhasUtilizadas < MIN_LINHAS
+  const canSubmit = Boolean(idProva) && !temaVazio && !tituloVazio && !textoVazio && !linhasInsuficientes && !submitting
+
   useEffect(() => {
     let active = true
 
@@ -34,9 +52,6 @@ function SubmissaoRedacao() {
         const data = await listarProvas()
         if (active) {
           setProvas(data)
-          if (!provaInicial && data.length > 0) {
-            setIdProva(String(data[0].id))
-          }
         }
       } catch {
         if (active) {
@@ -54,13 +69,13 @@ function SubmissaoRedacao() {
     return () => {
       active = false
     }
-  }, [provaInicial])
+  }, [])
 
   const handleSubmit = async (event) => {
     event.preventDefault()
-    setTouched({ idProva: true, texto: true })
+    setTouched({ idProva: true, tema: true, titulo: true, texto: true })
 
-    if (!idProva || texto.trim().length === 0) {
+    if (!canSubmit) {
       return
     }
 
@@ -70,6 +85,8 @@ function SubmissaoRedacao() {
     try {
       const redacao = await submeterRedacao({
         idProva: Number(idProva),
+        tema: tema.trim(),
+        titulo: titulo.trim(),
         texto: texto.trim(),
       })
       navigate(`/candidato/redacoes/${redacao.id}`)
@@ -79,6 +96,19 @@ function SubmissaoRedacao() {
       setSubmitting(false)
     }
   }
+
+  const handleTemaChipClick = (temaSugerido) => {
+    setTema(temaSugerido)
+    setTouched((current) => ({ ...current, tema: true }))
+  }
+
+  const handleTextoChange = useCallback((nextTexto) => {
+    setTexto(nextTexto)
+  }, [])
+
+  const handleLinhaCountChange = useCallback((nextLinhaCount) => {
+    setLinhasUtilizadas(nextLinhaCount)
+  }, [])
 
   return (
     <section className="contentBand">
@@ -121,33 +151,77 @@ function SubmissaoRedacao() {
           )}
 
           {provaSelecionada && (
+            <p className="examLineInfo">Esta prova permite ate {provaSelecionada.quantidadeLinhas} linhas</p>
+          )}
+
+          {provaSelecionada && (
             <div className="selectedExam">
               <strong>{provaSelecionada.cargo}</strong>
               <span>
-                {provaSelecionada.banca} · {provaSelecionada.estado} · nota maxima{' '}
-                {formatNumber(provaSelecionada.notaMaxima)} · {provaSelecionada.quantidadeLinhas} linhas
+                {provaSelecionada.banca} - {provaSelecionada.estado} - nota maxima{' '}
+                {formatNumber(provaSelecionada.notaMaxima)} - {provaSelecionada.quantidadeLinhas} linhas
               </span>
             </div>
           )}
 
+          <div className="themeBlock">
+            <Input
+              disabled={submitting}
+              error={touched.tema && temaVazio ? 'Informe o tema da redacao.' : ''}
+              label="Tema"
+              onBlur={() => setTouched((current) => ({ ...current, tema: true }))}
+              onChange={(event) => setTema(event.target.value)}
+              required
+              value={tema}
+            />
+            <div className="themeChips" aria-label="Sugestoes de tema">
+              {TEMAS_SUGERIDOS.map((temaSugerido) => (
+                <button
+                  className="themeChip"
+                  disabled={submitting}
+                  key={temaSugerido}
+                  onClick={() => handleTemaChipClick(temaSugerido)}
+                  type="button"
+                >
+                  {temaSugerido}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <Input
-            as="textarea"
             disabled={submitting}
-            error={touched.texto && texto.trim().length === 0 ? 'Digite sua redacao antes de enviar.' : ''}
-            label="Texto da redacao"
-            maxLength={MAX_TEXTO}
-            onBlur={() => setTouched((current) => ({ ...current, texto: true }))}
-            onChange={(event) => setTexto(event.target.value)}
+            error={touched.titulo && tituloVazio ? 'Informe o titulo da redacao.' : ''}
+            label="Titulo"
+            onBlur={() => setTouched((current) => ({ ...current, titulo: true }))}
+            onChange={(event) => setTitulo(event.target.value)}
             required
-            rows={14}
-            value={texto}
+            value={titulo}
           />
 
+          <div className="submissionEditor">
+            <FolhaRedacao
+              disabled={submitting || !provaSelecionada}
+              maxLength={MAX_TEXTO}
+              onChange={handleTextoChange}
+              onLinhaCountChange={handleLinhaCountChange}
+              placeholder={!provaSelecionada ? 'Selecione uma prova para comecar a escrever' : ''}
+              totalLinhas={totalLinhas}
+              value={texto}
+            />
+            {touched.texto && textoVazio && (
+              <span className="fieldError">Digite sua redacao antes de enviar.</span>
+            )}
+            {touched.texto && !textoVazio && linhasInsuficientes && (
+              <span className="fieldError">Escreva pelo menos {MIN_LINHAS} linhas antes de enviar.</span>
+            )}
+          </div>
+
           <div className="formFooter">
-            <span className={texto.length > MAX_TEXTO * 0.9 ? 'counter counterWarn' : 'counter'}>
-              {texto.length} / {MAX_TEXTO}
+            <span className="counter">
+              Minimo de {MIN_LINHAS} linhas para envio
             </span>
-            <Button disabled={submitting || !idProva || texto.trim().length === 0} loading={submitting} type="submit">
+            <Button disabled={!canSubmit} loading={submitting} type="submit">
               Enviar para correcao
             </Button>
           </div>

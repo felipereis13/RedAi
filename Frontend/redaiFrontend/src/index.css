@@ -110,6 +110,7 @@ h3 {
 
 .authForm,
 .submissionForm,
+.submissionEditor,
 .adminForm,
 .resultStack,
 .contentBand {
@@ -549,6 +550,41 @@ select.fieldInput + .fieldLabel {
 .selectedExam span {
   color: var(--muted);
   font-size: 14px;
+}
+
+.examLineInfo {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.themeBlock {
+  display: grid;
+  gap: 10px;
+}
+
+.themeChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.themeChip {
+  min-height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 11px;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.themeChip:hover:not(:disabled) {
+  border-color: rgba(79, 106, 245, 0.34);
+  background: var(--primary-soft);
+  color: var(--primary);
 }
 
 .counterWarn {
