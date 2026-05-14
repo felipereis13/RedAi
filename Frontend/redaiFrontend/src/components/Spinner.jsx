@@ -1,8 +1,8 @@
-function Spinner({ label = 'Carregando' }) {
+function Spinner({ label = 'Carregando', size = 'md' }) {
   return (
-    <span className="spinnerWrap" role="status" aria-live="polite">
-      <span className="spinner" aria-hidden="true" />
-      {label}
+    <span className={`spinnerWrap spinnerWrap--${size}`} role="status" aria-live="polite">
+      <span className={`spinner spinner--${size}`} aria-hidden="true" />
+      {label && <span>{label}</span>}
     </span>
   )
 }

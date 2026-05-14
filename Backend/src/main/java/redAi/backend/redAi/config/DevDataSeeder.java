@@ -9,6 +9,8 @@ import redAi.backend.redAi.model.entity.Role;
 import redAi.backend.redAi.model.entity.User;
 import redAi.backend.redAi.repository.UserRepository;
 
+import java.util.Optional;
+
 @Configuration
 @Profile("dev")
 public class DevDataSeeder {
@@ -44,7 +46,14 @@ public class DevDataSeeder {
             String senha,
             Role role
     ) {
-        if (userRepository.existsByEmail(email)) {
+        Optional<User> existingUser = userRepository.findByEmail(email);
+
+        if (existingUser.isPresent()) {
+            User user = existingUser.get();
+            user.setNome(nome);
+            user.setSenha(passwordEncoder.encode(senha));
+            user.setRole(role);
+            userRepository.save(user);
             return;
         }
 

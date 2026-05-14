@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { listarProvas, submeterRedacao } from '../api/candidato'
-import Spinner from '../components/Spinner'
+import Button from '../components/Button'
+import Card from '../components/Card'
+import EmptyState from '../components/EmptyState'
+import Input from '../components/Input'
+import SkeletonLoader from '../components/SkeletonLoader'
 
 const MAX_TEXTO = 5000
 
@@ -15,6 +19,7 @@ function SubmissaoRedacao() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [touched, setTouched] = useState({})
 
   const provaSelecionada = useMemo(
     () => provas.find((prova) => String(prova.id) === String(idProva)),
@@ -53,6 +58,12 @@ function SubmissaoRedacao() {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
+    setTouched({ idProva: true, texto: true })
+
+    if (!idProva || texto.trim().length === 0) {
+      return
+    }
+
     setSubmitting(true)
     setError('')
 
@@ -76,19 +87,24 @@ function SubmissaoRedacao() {
           <p className="eyebrow">Submissao</p>
           <h2>Enviar redacao para correcao</h2>
         </div>
-        <Link className="secondaryLinkButton" to="/candidato/provas">
+        <Button as={Link} variant="secondary" to="/candidato/provas">
           Ver provas
-        </Link>
+        </Button>
       </div>
 
       {loading ? (
-        <Spinner label="Carregando formulario" />
+        <SkeletonLoader rows={4} />
       ) : (
-        <form className="submissionForm" onSubmit={handleSubmit}>
-          <label>
-            Prova
-            <select
-              disabled={submitting || provas.length === 0}
+        <Card as="form" className="submissionForm" onSubmit={handleSubmit}>
+          {provas.length === 0 ? (
+            <EmptyState title="Nenhuma prova ativa." subtitle="Aguarde uma configuracao de prova para enviar redacoes." />
+          ) : (
+            <Input
+              as="select"
+              disabled={submitting}
+              error={touched.idProva && !idProva ? 'Selecione uma prova.' : ''}
+              label="Prova"
+              onBlur={() => setTouched((current) => ({ ...current, idProva: true }))}
               onChange={(event) => setIdProva(event.target.value)}
               required
               value={idProva}
@@ -101,8 +117,8 @@ function SubmissaoRedacao() {
                   {prova.cargo} - {prova.banca}/{prova.estado}
                 </option>
               ))}
-            </select>
-          </label>
+            </Input>
+          )}
 
           {provaSelecionada && (
             <div className="selectedExam">
@@ -114,30 +130,30 @@ function SubmissaoRedacao() {
             </div>
           )}
 
-          <label>
-            Texto da redacao
-            <textarea
-              disabled={submitting}
-              maxLength={MAX_TEXTO}
-              onChange={(event) => setTexto(event.target.value)}
-              placeholder="Digite sua redacao aqui..."
-              required
-              rows={14}
-              value={texto}
-            />
-          </label>
+          <Input
+            as="textarea"
+            disabled={submitting}
+            error={touched.texto && texto.trim().length === 0 ? 'Digite sua redacao antes de enviar.' : ''}
+            label="Texto da redacao"
+            maxLength={MAX_TEXTO}
+            onBlur={() => setTouched((current) => ({ ...current, texto: true }))}
+            onChange={(event) => setTexto(event.target.value)}
+            required
+            rows={14}
+            value={texto}
+          />
 
           <div className="formFooter">
             <span className={texto.length > MAX_TEXTO * 0.9 ? 'counter counterWarn' : 'counter'}>
               {texto.length} / {MAX_TEXTO}
             </span>
-            <button disabled={submitting || !idProva || texto.trim().length === 0} type="submit">
-              {submitting ? <Spinner label="Enviando" /> : 'Enviar para correcao'}
-            </button>
+            <Button disabled={submitting || !idProva || texto.trim().length === 0} loading={submitting} type="submit">
+              Enviar para correcao
+            </Button>
           </div>
 
           {error && <p className="formError">{error}</p>}
-        </form>
+        </Card>
       )}
     </section>
   )

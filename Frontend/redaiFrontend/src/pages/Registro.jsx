@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import api from '../api/axiosInstance'
-import Spinner from '../components/Spinner'
+import Button from '../components/Button'
+import Card from '../components/Card'
+import Input from '../components/Input'
 import { useAuth } from '../context/useAuth'
 
 function Registro() {
@@ -12,6 +14,7 @@ function Registro() {
   const [senha, setSenha] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [touched, setTouched] = useState({})
 
   if (isAuthenticated) {
     return <Navigate to="/candidato" replace />
@@ -19,6 +22,12 @@ function Registro() {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
+    setTouched({ nome: true, email: true, senha: true })
+
+    if (!nome || !email || senha.length < 6) {
+      return
+    }
+
     setLoading(true)
     setError('')
 
@@ -41,50 +50,50 @@ function Registro() {
           <p className="muted">Cadastre-se para acessar as provas disponiveis.</p>
         </div>
 
-        <form className="authForm" onSubmit={handleSubmit}>
-          <label>
-            Nome
-            <input
-              autoComplete="name"
-              disabled={loading}
-              onChange={(event) => setNome(event.target.value)}
-              required
-              type="text"
-              value={nome}
-            />
-          </label>
+        <Card as="form" className="authForm" onSubmit={handleSubmit}>
+          <Input
+            autoComplete="name"
+            disabled={loading}
+            error={touched.nome && !nome ? 'Informe seu nome.' : ''}
+            label="Nome"
+            onBlur={() => setTouched((current) => ({ ...current, nome: true }))}
+            onChange={(event) => setNome(event.target.value)}
+            required
+            type="text"
+            value={nome}
+          />
 
-          <label>
-            Email
-            <input
-              autoComplete="email"
-              disabled={loading}
-              onChange={(event) => setEmail(event.target.value)}
-              required
-              type="email"
-              value={email}
-            />
-          </label>
+          <Input
+            autoComplete="email"
+            disabled={loading}
+            error={touched.email && !email ? 'Informe seu email.' : ''}
+            label="Email"
+            onBlur={() => setTouched((current) => ({ ...current, email: true }))}
+            onChange={(event) => setEmail(event.target.value)}
+            required
+            type="email"
+            value={email}
+          />
 
-          <label>
-            Senha
-            <input
-              autoComplete="new-password"
-              disabled={loading}
-              minLength={6}
-              onChange={(event) => setSenha(event.target.value)}
-              required
-              type="password"
-              value={senha}
-            />
-          </label>
+          <Input
+            autoComplete="new-password"
+            disabled={loading}
+            error={touched.senha && senha.length < 6 ? 'Use ao menos 6 caracteres.' : ''}
+            label="Senha"
+            minLength={6}
+            onBlur={() => setTouched((current) => ({ ...current, senha: true }))}
+            onChange={(event) => setSenha(event.target.value)}
+            required
+            type="password"
+            value={senha}
+          />
 
           {error && <p className="formError">{error}</p>}
 
-          <button disabled={loading} type="submit">
-            {loading ? <Spinner label="Criando" /> : 'Criar conta'}
-          </button>
-        </form>
+          <Button disabled={loading} loading={loading} type="submit">
+            Criar conta
+          </Button>
+        </Card>
 
         <p className="authSwitch">
           Ja tem cadastro? <Link to="/login">Entrar</Link>

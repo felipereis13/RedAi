@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { buscarRedacao } from '../api/candidato'
+import Badge from '../components/Badge'
+import Button from '../components/Button'
+import Card from '../components/Card'
+import ProgressBar from '../components/ProgressBar'
+import SkeletonLoader from '../components/SkeletonLoader'
 import Spinner from '../components/Spinner'
 
 const POLLING_STATUS = new Set(['PENDENTE', 'PROCESSANDO'])
@@ -51,7 +56,7 @@ function ResultadoRedacao() {
   if (loading) {
     return (
       <section className="contentBand">
-        <Spinner label="Carregando resultado" />
+        <SkeletonLoader rows={4} />
       </section>
     )
   }
@@ -60,9 +65,9 @@ function ResultadoRedacao() {
     return (
       <section className="contentBand">
         <p className="formError">{error}</p>
-        <Link className="secondaryLinkButton fitButton" to="/candidato">
+        <Button as={Link} className="fitButton" variant="secondary" to="/candidato">
           Voltar
-        </Link>
+        </Button>
       </section>
     )
   }
@@ -78,23 +83,26 @@ function ResultadoRedacao() {
           <p className="eyebrow">Resultado</p>
           <h2>Redacao #{redacao.id}</h2>
         </div>
-        <Link className="secondaryLinkButton" to="/candidato">
+        <Button as={Link} variant="secondary" to="/candidato">
           Historico
-        </Link>
+        </Button>
       </div>
 
       {POLLING_STATUS.has(redacao.status) && (
-        <div className="processingPanel">
+        <Card className="processingPanel">
+          <Badge status={redacao.status} pulse>
+            {redacao.status === 'PENDENTE' ? 'Pendente' : 'Processando'}
+          </Badge>
           <Spinner label="Corrigindo sua redacao..." />
           <p className="muted">A pagina sera atualizada automaticamente a cada 3 segundos.</p>
-        </div>
+        </Card>
       )}
 
       {redacao.status === 'ERRO' && (
-        <div className="errorPanel">
+        <Card className="errorPanel">
           <h3>Nao foi possivel concluir a correcao</h3>
           <p>Houve uma falha ao corrigir sua redacao. Tente enviar novamente em alguns instantes.</p>
-        </div>
+        </Card>
       )}
 
       {redacao.status === 'CONCLUIDA' && redacao.resultado && <ResultadoConcluido resultado={redacao.resultado} />}
@@ -108,22 +116,23 @@ function ResultadoConcluido({ resultado }) {
   return (
     <div className="resultStack">
       <div className="resultSummary">
-        <div>
+        <Card>
           <span className="summaryLabel">Nota</span>
           <strong>
             {formatNumber(resultado.notaTotal)} / {formatNumber(resultado.notaMaximaProva)}
           </strong>
-        </div>
-        <div className="percentBox">
+        </Card>
+        <Card className="percentBox">
           <span>{percentual}%</span>
           <small>Aproveitamento</small>
-        </div>
+          <ProgressBar value={percentual} />
+        </Card>
       </div>
 
-      <article className="feedbackBox">
+      <Card className="feedbackBox">
         <h3>Feedback geral</h3>
         <p>{resultado.feedbackGeral}</p>
-      </article>
+      </Card>
 
       <div className="tableWrap">
         <table>

@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { BookOpen } from 'lucide-react'
 import { listarProvas } from '../api/candidato'
-import Spinner from '../components/Spinner'
+import Button from '../components/Button'
+import Card from '../components/Card'
+import EmptyState from '../components/EmptyState'
+import SkeletonLoader from '../components/SkeletonLoader'
 
 function ListaProvas() {
   const [provas, setProvas] = useState([])
@@ -42,21 +46,25 @@ function ListaProvas() {
           <p className="eyebrow">Provas</p>
           <h2>Escolha uma prova para comecar</h2>
         </div>
-        <Link className="primaryLinkButton" to="/candidato/redacoes/nova">
+        <Button as={Link} to="/candidato/redacoes/nova">
           Submeter redacao
-        </Link>
+        </Button>
       </div>
 
-      {loading && <Spinner label="Carregando provas" />}
+      {loading && <SkeletonLoader rows={3} variant="cards" />}
       {error && <p className="formError">{error}</p>}
 
       {!loading && !error && provas.length === 0 && (
-        <p className="emptyState">Nenhuma prova disponivel no momento.</p>
+        <EmptyState
+          icon={BookOpen}
+          title="Nenhuma prova disponivel no momento."
+          subtitle="Assim que o administrador cadastrar uma prova ativa, ela aparecera aqui."
+        />
       )}
 
       <div className="provaGrid">
         {provas.map((prova) => (
-          <article className="itemCard" key={prova.id}>
+          <Card key={prova.id}>
             <div>
               <h3>{prova.cargo}</h3>
               <p className="metaLine">
@@ -66,11 +74,11 @@ function ListaProvas() {
             </div>
             <div className="cardFooter">
               <span className="scorePill">Nota maxima {formatNumber(prova.notaMaxima)}</span>
-              <Link className="primaryLinkButton" to={`/candidato/redacoes/nova?idProva=${prova.id}`}>
+              <Button as={Link} to={`/candidato/redacoes/nova?idProva=${prova.id}`}>
                 Escrever
-              </Link>
+              </Button>
             </div>
-          </article>
+          </Card>
         ))}
       </div>
     </section>

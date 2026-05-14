@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
+import { ClipboardList } from 'lucide-react'
 import { atualizarProva, criarProva, desativarProva, listarProvasAdmin } from '../api/admin'
-import Spinner from '../components/Spinner'
+import Badge from '../components/Badge'
+import Button from '../components/Button'
+import Card from '../components/Card'
+import EmptyState from '../components/EmptyState'
+import Input from '../components/Input'
+import SkeletonLoader from '../components/SkeletonLoader'
+import { useToast } from '../components/useToast'
 
 const criterioVazio = {
   nome: '',
@@ -24,6 +31,8 @@ function AdminProvas() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [feedback, setFeedback] = useState(null)
+  const [touched, setTouched] = useState({})
+  const toast = useToast()
 
   const somaCriterios = useMemo(
     () => form.criterios.reduce((total, criterio) => total + toNumber(criterio.notaMaxima), 0),
@@ -103,6 +112,7 @@ function AdminProvas() {
   const limparFormulario = () => {
     setEditingId(null)
     setForm(formInicial)
+    setTouched({})
   }
 
   const editarProva = (prova) => {
@@ -127,6 +137,7 @@ function AdminProvas() {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
+    setTouched({ cargo: true, banca: true, estado: true, notaMaxima: true, criterios: true })
 
     if (somaExcedida) {
       setFeedback({
@@ -145,9 +156,11 @@ function AdminProvas() {
       if (editingId) {
         await atualizarProva(editingId, payload)
         setFeedback({ type: 'success', message: 'Prova atualizada com sucesso.' })
+        toast?.showToast('Prova atualizada com sucesso.', 'success')
       } else {
         await criarProva(payload)
         setFeedback({ type: 'success', message: 'Prova criada com sucesso.' })
+        toast?.showToast('Prova criada com sucesso.', 'success')
       }
 
       limparFormulario()
@@ -157,6 +170,7 @@ function AdminProvas() {
         type: 'error',
         message: error.response?.data?.message || 'Nao foi possivel salvar a prova.',
       })
+      toast?.showToast(error.response?.data?.message || 'Nao foi possivel salvar a prova.', 'error')
     } finally {
       setSaving(false)
     }
@@ -172,9 +186,11 @@ function AdminProvas() {
     try {
       await desativarProva(prova.id)
       setFeedback({ type: 'success', message: 'Prova desativada com sucesso.' })
+      toast?.showToast('Prova desativada com sucesso.', 'success')
       await carregarProvas()
     } catch {
       setFeedback({ type: 'error', message: 'Nao foi possivel desativar a prova.' })
+      toast?.showToast('Nao foi possivel desativar a prova.', 'error')
     }
   }
 
@@ -186,9 +202,9 @@ function AdminProvas() {
           <h2>{editingId ? 'Editar prova' : 'Criar nova prova'}</h2>
         </div>
         {editingId && (
-          <button className="secondaryGhostButton" onClick={limparFormulario} type="button">
+          <Button variant="secondary" onClick={limparFormulario}>
             Cancelar edicao
-          </button>
+          </Button>
         )}
       </div>
 
@@ -196,57 +212,56 @@ function AdminProvas() {
         <p className={feedback.type === 'success' ? 'formSuccess' : 'formError'}>{feedback.message}</p>
       )}
 
-      <form className="adminForm" onSubmit={handleSubmit}>
+      <Card as="form" className="adminForm" onSubmit={handleSubmit}>
         <div className="formGrid">
-          <label>
-            Cargo
-            <input
-              onChange={(event) => handleFieldChange('cargo', event.target.value)}
-              required
-              type="text"
-              value={form.cargo}
-            />
-          </label>
-          <label>
-            Banca
-            <input
-              onChange={(event) => handleFieldChange('banca', event.target.value)}
-              required
-              type="text"
-              value={form.banca}
-            />
-          </label>
-          <label>
-            Estado
-            <input
-              maxLength={2}
-              onChange={(event) => handleFieldChange('estado', event.target.value.toUpperCase())}
-              required
-              type="text"
-              value={form.estado}
-            />
-          </label>
-          <label>
-            Nota maxima
-            <input
-              min="0.1"
-              onChange={(event) => handleFieldChange('notaMaxima', event.target.value)}
-              required
-              step="0.1"
-              type="number"
-              value={form.notaMaxima}
-            />
-          </label>
+          <Input
+            error={touched.cargo && !form.cargo ? 'Informe o cargo.' : ''}
+            label="Cargo"
+            onBlur={() => setTouched((current) => ({ ...current, cargo: true }))}
+            onChange={(event) => handleFieldChange('cargo', event.target.value)}
+            required
+            type="text"
+            value={form.cargo}
+          />
+          <Input
+            error={touched.banca && !form.banca ? 'Informe a banca.' : ''}
+            label="Banca"
+            onBlur={() => setTouched((current) => ({ ...current, banca: true }))}
+            onChange={(event) => handleFieldChange('banca', event.target.value)}
+            required
+            type="text"
+            value={form.banca}
+          />
+          <Input
+            error={touched.estado && form.estado.length !== 2 ? 'Use a sigla com 2 letras.' : ''}
+            label="Estado"
+            maxLength={2}
+            onBlur={() => setTouched((current) => ({ ...current, estado: true }))}
+            onChange={(event) => handleFieldChange('estado', event.target.value.toUpperCase())}
+            required
+            type="text"
+            value={form.estado}
+          />
+          <Input
+            error={touched.notaMaxima && notaMaximaProva <= 0 ? 'Informe uma nota maior que zero.' : ''}
+            label="Nota maxima"
+            min="0.1"
+            onBlur={() => setTouched((current) => ({ ...current, notaMaxima: true }))}
+            onChange={(event) => handleFieldChange('notaMaxima', event.target.value)}
+            required
+            step="0.1"
+            type="number"
+            value={form.notaMaxima}
+          />
         </div>
 
-        <label>
-          Descricao
-          <textarea
-            onChange={(event) => handleFieldChange('descricao', event.target.value)}
-            rows={4}
-            value={form.descricao}
-          />
-        </label>
+        <Input
+          as="textarea"
+          label="Descricao"
+          onChange={(event) => handleFieldChange('descricao', event.target.value)}
+          rows={4}
+          value={form.descricao}
+        />
 
         <div className={somaExcedida ? 'sumAlert sumAlertError' : 'sumAlert'}>
           Soma dos criterios: {formatNumber(somaCriterios)} / {formatNumber(notaMaximaProva)}
@@ -258,9 +273,9 @@ function AdminProvas() {
 
         <div className="criteriaHeader">
           <h3>Criterios de correcao</h3>
-          <button className="secondaryGhostButton" onClick={adicionarCriterio} type="button">
+          <Button variant="secondary" onClick={adicionarCriterio}>
             Adicionar criterio
-          </button>
+          </Button>
         </div>
 
         <div className="criteriaList">
@@ -268,41 +283,39 @@ function AdminProvas() {
             <article className="criterionCard" key={index}>
               <div className="criterionTop">
                 <strong>Criterio {index + 1}</strong>
-                <button className="dangerTextButton" onClick={() => removerCriterio(index)} type="button">
+                <Button variant="ghostDanger" onClick={() => removerCriterio(index)}>
                   Remover
-                </button>
+                </Button>
               </div>
               <div className="formGrid">
-                <label>
-                  Nome
-                  <input
-                    onChange={(event) => handleCriterioChange(index, 'nome', event.target.value)}
-                    required
-                    type="text"
-                    value={criterio.nome}
-                  />
-                </label>
-                <label>
-                  Nota maxima
-                  <input
-                    min="0.1"
-                    onChange={(event) => handleCriterioChange(index, 'notaMaxima', event.target.value)}
-                    required
-                    step="0.1"
-                    type="number"
-                    value={criterio.notaMaxima}
-                  />
-                </label>
-              </div>
-              <label>
-                Descricao
-                <textarea
-                  onChange={(event) => handleCriterioChange(index, 'descricao', event.target.value)}
+                <Input
+                  error={touched.criterios && !criterio.nome ? 'Informe o nome do criterio.' : ''}
+                  label="Nome"
+                  onChange={(event) => handleCriterioChange(index, 'nome', event.target.value)}
                   required
-                  rows={3}
-                  value={criterio.descricao}
+                  type="text"
+                  value={criterio.nome}
                 />
-              </label>
+                <Input
+                  error={touched.criterios && toNumber(criterio.notaMaxima) <= 0 ? 'Nota maior que zero.' : ''}
+                  label="Nota maxima"
+                  min="0.1"
+                  onChange={(event) => handleCriterioChange(index, 'notaMaxima', event.target.value)}
+                  required
+                  step="0.1"
+                  type="number"
+                  value={criterio.notaMaxima}
+                />
+              </div>
+              <Input
+                as="textarea"
+                error={touched.criterios && !criterio.descricao ? 'Descreva o criterio.' : ''}
+                label="Descricao"
+                onChange={(event) => handleCriterioChange(index, 'descricao', event.target.value)}
+                required
+                rows={3}
+                value={criterio.descricao}
+              />
             </article>
           ))}
         </div>
@@ -311,11 +324,11 @@ function AdminProvas() {
           <span className="counter">
             {editingId ? `Editando prova #${editingId}` : 'Nova configuracao'}
           </span>
-          <button disabled={saving || somaExcedida} type="submit">
-            {saving ? <Spinner label="Salvando" /> : editingId ? 'Salvar alteracoes' : 'Criar prova'}
-          </button>
+          <Button disabled={saving || somaExcedida} loading={saving} type="submit">
+            {editingId ? 'Salvar alteracoes' : 'Criar prova'}
+          </Button>
         </div>
-      </form>
+      </Card>
 
       <div className="sectionHeader">
         <div>
@@ -325,7 +338,13 @@ function AdminProvas() {
       </div>
 
       {loading ? (
-        <Spinner label="Carregando provas" />
+        <SkeletonLoader rows={4} />
+      ) : provas.length === 0 ? (
+        <EmptyState
+          icon={ClipboardList}
+          title="Nenhuma prova cadastrada."
+          subtitle="Crie a primeira configuracao para liberar envios aos candidatos."
+        />
       ) : (
         <div className="tableWrap">
           <table>
@@ -345,23 +364,20 @@ function AdminProvas() {
                   <td>{prova.banca}</td>
                   <td>{prova.estado}</td>
                   <td>
-                    <span className={prova.ativo ? 'statusBadge statusCONCLUIDA' : 'statusBadge statusERRO'}>
-                      {prova.ativo ? 'Ativa' : 'Inativa'}
-                    </span>
+                    <Badge status={prova.ativo ? 'CONCLUIDA' : 'ERRO'}>{prova.ativo ? 'Ativa' : 'Inativa'}</Badge>
                   </td>
                   <td>
                     <div className="tableActions">
-                      <button className="secondaryGhostButton" onClick={() => editarProva(prova)} type="button">
+                      <Button variant="secondary" onClick={() => editarProva(prova)}>
                         Editar
-                      </button>
-                      <button
-                        className="dangerButton"
+                      </Button>
+                      <Button
+                        variant="danger"
                         disabled={!prova.ativo}
                         onClick={() => handleDesativar(prova)}
-                        type="button"
                       >
                         Desativar
-                      </button>
+                      </Button>
                     </div>
                   </td>
                 </tr>

@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { History } from 'lucide-react'
 import { listarRedacoes } from '../api/candidato'
-import Spinner from '../components/Spinner'
+import Badge from '../components/Badge'
+import Button from '../components/Button'
+import EmptyState from '../components/EmptyState'
+import SkeletonLoader from '../components/SkeletonLoader'
 
 function PainelCandidato() {
   const [redacoes, setRedacoes] = useState([])
@@ -43,20 +47,24 @@ function PainelCandidato() {
             <h2>Historico de envios</h2>
           </div>
           <div className="buttonGroup">
-            <Link className="secondaryLinkButton" to="/candidato/provas">
+            <Button as={Link} variant="secondary" to="/candidato/provas">
               Ver provas
-            </Link>
-            <Link className="primaryLinkButton" to="/candidato/redacoes/nova">
+            </Button>
+            <Button as={Link} to="/candidato/redacoes/nova">
               Nova redacao
-            </Link>
+            </Button>
           </div>
         </div>
 
-        {loading && <Spinner label="Carregando historico" />}
+        {loading && <SkeletonLoader rows={4} />}
         {error && <p className="formError">{error}</p>}
 
         {!loading && !error && redacoes.length === 0 && (
-          <p className="emptyState">Voce ainda nao enviou redacoes.</p>
+          <EmptyState
+            icon={History}
+            title="Voce ainda nao enviou redacoes."
+            subtitle="Escolha uma prova disponivel para iniciar sua primeira correcao."
+          />
         )}
 
         <div className="historyList">
@@ -66,7 +74,9 @@ function PainelCandidato() {
                 <strong>Redacao #{redacao.id}</strong>
                 <span>{formatDate(redacao.createdAt)}</span>
               </div>
-              <span className={`statusBadge status${redacao.status}`}>{statusLabel(redacao.status)}</span>
+              <Badge status={redacao.status} pulse={redacao.status === 'PROCESSANDO'}>
+                {statusLabel(redacao.status)}
+              </Badge>
             </Link>
           ))}
         </div>
