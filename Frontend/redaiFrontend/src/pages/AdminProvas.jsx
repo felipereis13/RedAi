@@ -21,6 +21,7 @@ const formInicial = {
   estado: '',
   descricao: '',
   notaMaxima: '',
+  quantidadeLinhas: '30',
   criterios: [{ ...criterioVazio }],
 }
 
@@ -123,6 +124,7 @@ function AdminProvas() {
       estado: prova.estado || '',
       descricao: prova.descricao || '',
       notaMaxima: String(prova.notaMaxima ?? ''),
+      quantidadeLinhas: String(prova.quantidadeLinhas ?? 30),
       criterios: prova.criterios?.length
         ? prova.criterios.map((criterio) => ({
             nome: criterio.nome || '',
@@ -137,7 +139,7 @@ function AdminProvas() {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
-    setTouched({ cargo: true, banca: true, estado: true, notaMaxima: true, criterios: true })
+    setTouched({ cargo: true, banca: true, estado: true, notaMaxima: true, quantidadeLinhas: true, criterios: true })
 
     if (somaExcedida) {
       setFeedback({
@@ -253,6 +255,22 @@ function AdminProvas() {
             type="number"
             value={form.notaMaxima}
           />
+          <Input
+            error={
+              touched.quantidadeLinhas && !isQuantidadeLinhasValida(form.quantidadeLinhas)
+                ? 'Informe entre 10 e 60 linhas.'
+                : ''
+            }
+            label="Quantidade de linhas"
+            max="60"
+            min="10"
+            onBlur={() => setTouched((current) => ({ ...current, quantidadeLinhas: true }))}
+            onChange={(event) => handleFieldChange('quantidadeLinhas', event.target.value)}
+            required
+            step="1"
+            type="number"
+            value={form.quantidadeLinhas}
+          />
         </div>
 
         <Input
@@ -353,6 +371,7 @@ function AdminProvas() {
                 <th>Cargo</th>
                 <th>Banca</th>
                 <th>Estado</th>
+                <th>Linhas</th>
                 <th>Status</th>
                 <th>Acoes</th>
               </tr>
@@ -363,6 +382,7 @@ function AdminProvas() {
                   <td>{prova.cargo}</td>
                   <td>{prova.banca}</td>
                   <td>{prova.estado}</td>
+                  <td>{prova.quantidadeLinhas}</td>
                   <td>
                     <Badge status={prova.ativo ? 'CONCLUIDA' : 'ERRO'}>{prova.ativo ? 'Ativa' : 'Inativa'}</Badge>
                   </td>
@@ -397,6 +417,7 @@ function buildPayload(form) {
     estado: form.estado.trim().toUpperCase(),
     descricao: form.descricao.trim(),
     notaMaxima: toNumber(form.notaMaxima),
+    quantidadeLinhas: Number(form.quantidadeLinhas),
     criterios: form.criterios.map((criterio) => ({
       nome: criterio.nome.trim(),
       descricao: criterio.descricao.trim(),
@@ -408,6 +429,11 @@ function buildPayload(form) {
 function toNumber(value) {
   const number = Number(value)
   return Number.isFinite(number) ? number : 0
+}
+
+function isQuantidadeLinhasValida(value) {
+  const number = Number(value)
+  return Number.isInteger(number) && number >= 10 && number <= 60
 }
 
 function formatNumber(value) {

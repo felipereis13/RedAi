@@ -46,6 +46,7 @@ public class ProvaService {
                 .estado(request.getEstado().trim().toUpperCase())
                 .descricao(request.getDescricao())
                 .notaMaxima(request.getNotaMaxima())
+                .quantidadeLinhas(request.getQuantidadeLinhas())
                 .ativo(true)
                 .build();
 
@@ -64,6 +65,7 @@ public class ProvaService {
         prova.setEstado(request.getEstado().trim().toUpperCase());
         prova.setDescricao(request.getDescricao());
         prova.setNotaMaxima(request.getNotaMaxima());
+        prova.setQuantidadeLinhas(request.getQuantidadeLinhas());
         prova.setAtivo(true);
 
         substituirCriterios(prova, request.getCriterios());

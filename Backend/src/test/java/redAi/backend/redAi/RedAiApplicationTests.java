@@ -154,6 +154,7 @@ class RedAiApplicationTests {
 								  "estado": "DF",
 								  "descricao": "Prova discursiva",
 								  "notaMaxima": 10.0,
+								  "quantidadeLinhas": 30,
 								  "criterios": [
 								    {
 								      "nome": "Conteúdo",
@@ -171,6 +172,7 @@ class RedAiApplicationTests {
 				.andExpect(status().isCreated())
 				.andExpect(jsonPath("$.id").isNumber())
 				.andExpect(jsonPath("$.notaMaxima").value(10.0))
+				.andExpect(jsonPath("$.quantidadeLinhas").value(30))
 				.andExpect(jsonPath("$.ativo").value(true))
 				.andExpect(jsonPath("$.criterios[0].notaMaxima").value(6.0))
 				.andReturn();
@@ -182,6 +184,13 @@ class RedAiApplicationTests {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.length()", greaterThanOrEqualTo(1)));
 
+		String candidatoToken = jwtUtil.generateToken("candidato@example.com", "CANDIDATO");
+
+		mockMvc.perform(get("/api/candidato/provas")
+						.header("Authorization", "Bearer " + candidatoToken))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$[0].quantidadeLinhas").value(30));
+
 		mockMvc.perform(put("/api/admin/provas/{id}", provaId)
 						.header("Authorization", "Bearer " + adminToken)
 						.contentType("application/json")
@@ -192,6 +201,7 @@ class RedAiApplicationTests {
 								  "estado": "SP",
 								  "descricao": "Questão discursiva atualizada",
 								  "notaMaxima": 100.0,
+								  "quantidadeLinhas": 45,
 								  "criterios": [
 								    {
 								      "nome": "Conhecimento técnico",
@@ -209,6 +219,7 @@ class RedAiApplicationTests {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.cargo").value("Auditor Fiscal"))
 				.andExpect(jsonPath("$.notaMaxima").value(100.0))
+				.andExpect(jsonPath("$.quantidadeLinhas").value(45))
 				.andExpect(jsonPath("$.criterios[0].notaMaxima").value(70.0));
 
 		mockMvc.perform(delete("/api/admin/provas/{id}", provaId)
@@ -230,6 +241,7 @@ class RedAiApplicationTests {
 								  "estado": "RJ",
 								  "descricao": "Redação",
 								  "notaMaxima": 10.0,
+								  "quantidadeLinhas": 30,
 								  "criterios": [
 								    {
 								      "nome": "Conteúdo",

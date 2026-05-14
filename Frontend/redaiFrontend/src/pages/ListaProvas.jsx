@@ -73,7 +73,9 @@ function ListaProvas() {
               {prova.descricao && <p className="muted">{prova.descricao}</p>}
             </div>
             <div className="cardFooter">
-              <span className="scorePill">Nota maxima {formatNumber(prova.notaMaxima)}</span>
+              <span className="scorePill">
+                Nota maxima {formatNumber(prova.notaMaxima)} - {prova.quantidadeLinhas} linhas
+              </span>
               <Button as={Link} to={`/candidato/redacoes/nova?idProva=${prova.id}`}>
                 Escrever
               </Button>

@@ -8,6 +8,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -46,6 +48,11 @@ public class ConfiguracaoProva {
     @Positive
     @Column(nullable = false)
     private double notaMaxima;
+
+    @Min(10)
+    @Max(60)
+    @Column(nullable = false)
+    private Integer quantidadeLinhas;
 
     @Builder.Default
     @Column(nullable = false)

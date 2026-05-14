@@ -125,7 +125,7 @@ function SubmissaoRedacao() {
               <strong>{provaSelecionada.cargo}</strong>
               <span>
                 {provaSelecionada.banca} · {provaSelecionada.estado} · nota maxima{' '}
-                {formatNumber(provaSelecionada.notaMaxima)}
+                {formatNumber(provaSelecionada.notaMaxima)} · {provaSelecionada.quantidadeLinhas} linhas
               </span>
             </div>
           )}

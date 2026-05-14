@@ -20,6 +20,7 @@ public class ProvaResponse {
     private String estado;
     private String descricao;
     private double notaMaxima;
+    private Integer quantidadeLinhas;
     private boolean ativo;
     private List<CriterioCorrecaoResponse> criterios;
 
@@ -31,6 +32,7 @@ public class ProvaResponse {
                 .estado(prova.getEstado())
                 .descricao(prova.getDescricao())
                 .notaMaxima(prova.getNotaMaxima())
+                .quantidadeLinhas(prova.getQuantidadeLinhas())
                 .ativo(prova.isAtivo())
                 .criterios(prova.getCriterios().stream()
                         .map(CriterioCorrecaoResponse::fromEntity)
