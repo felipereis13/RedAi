@@ -7,6 +7,7 @@ public record AiCorrectionResult(
         double notaMaximaProva,
         double percentualAproveitamento,
         String feedbackGeral,
+        String redacaoCorrigida,
         List<AvaliacaoCriterio> avaliacoesCriterios
 ) {
 }

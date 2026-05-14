@@ -4,6 +4,7 @@ import { buscarRedacao } from '../api/candidato'
 import Badge from '../components/Badge'
 import Button from '../components/Button'
 import Card from '../components/Card'
+import EmptyState from '../components/EmptyState'
 import ProgressBar from '../components/ProgressBar'
 import SkeletonLoader from '../components/SkeletonLoader'
 import Spinner from '../components/Spinner'
@@ -73,7 +74,14 @@ function ResultadoRedacao() {
   }
 
   if (!redacao) {
-    return null
+    return (
+      <section className="contentBand">
+        <EmptyState title="Redacao nao encontrada." subtitle="Volte ao historico para consultar seus envios." />
+        <Button as={Link} className="fitButton" variant="secondary" to="/candidato">
+          Voltar ao historico
+        </Button>
+      </section>
+    )
   }
 
   return (

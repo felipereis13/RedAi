@@ -68,7 +68,7 @@ function ListaProvas() {
             <div>
               <h3>{prova.cargo}</h3>
               <p className="metaLine">
-                {prova.banca} · {prova.estado}
+                {prova.banca} - {prova.estado}
               </p>
               {prova.descricao && <p className="muted">{prova.descricao}</p>}
             </div>

@@ -37,7 +37,8 @@ body {
   min-height: 100vh;
   margin: 0;
   background:
-    radial-gradient(circle at top left, rgba(79, 106, 245, 0.08), transparent 34rem),
+    radial-gradient(circle at top left, rgba(79, 106, 245, 0.08), transparent 30rem),
+    linear-gradient(180deg, #ffffff 0, #fafafa 18rem),
     var(--bg);
 }
 
@@ -99,7 +100,7 @@ h3 {
   display: grid;
   min-height: 100vh;
   place-items: center;
-  padding: 32px 18px;
+  padding: 40px 18px;
 }
 
 .authPanel {
@@ -141,6 +142,16 @@ h3 {
   text-align: center;
 }
 
+.authIntro {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+}
+
+.authIntro .brandMark {
+  margin-bottom: 14px;
+}
+
 .pageShell {
   min-height: 100vh;
 }
@@ -164,6 +175,7 @@ h3 {
   border-bottom: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px rgba(26, 26, 46, 0.04);
   padding: 0 28px;
 }
 
@@ -185,6 +197,7 @@ h3 {
   color: var(--text);
   font-size: 18px;
   font-weight: 800;
+  letter-spacing: 0;
 }
 
 .brandMark {
@@ -221,6 +234,7 @@ h3 {
   height: calc(100vh - 68px);
   border-right: 1px solid var(--border);
   background: #fff;
+  box-shadow: 8px 0 24px rgba(26, 26, 46, 0.03);
   padding: 24px 16px;
 }
 
@@ -233,6 +247,7 @@ h3 {
 }
 
 .sidebar a,
+.sidebarDisabled,
 .tabNav a {
   min-height: 42px;
   gap: 10px;
@@ -249,6 +264,19 @@ h3 {
   background: var(--primary-soft);
   color: var(--primary);
   box-shadow: inset 0 0 0 1px rgba(79, 106, 245, 0.14);
+}
+
+.sidebarDisabled {
+  align-items: center;
+  display: inline-flex;
+  opacity: 0.58;
+}
+
+.sidebarDisabled small {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
 .pageContent {
@@ -310,6 +338,11 @@ h3 {
   transform: translateY(-1px);
 }
 
+.uiButton:disabled:hover,
+.uiButton[aria-disabled="true"]:hover {
+  transform: none;
+}
+
 .uiButton--primary {
   background: var(--primary);
   color: #fff;
@@ -324,6 +357,7 @@ h3 {
   border: 1px solid var(--border);
   background: #fff;
   color: var(--text);
+  box-shadow: 0 8px 18px rgba(26, 26, 46, 0.04);
 }
 
 .uiButton--secondary:hover,
@@ -376,6 +410,12 @@ h3 {
   display: grid;
   gap: 16px;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.provaGrid .card {
+  display: grid;
+  gap: 18px;
+  align-content: space-between;
 }
 
 .metaLine {
@@ -456,6 +496,11 @@ h3 {
   transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 
+.fieldInput:disabled {
+  background: #f9fafb;
+  color: #9ca3af;
+}
+
 select.fieldInput {
   appearance: none;
 }
@@ -502,6 +547,7 @@ select.fieldInput + .fieldLabel {
   color: var(--danger);
   font-size: 12px;
   font-weight: 600;
+  line-height: 1.4;
 }
 
 .formError,
@@ -552,6 +598,11 @@ select.fieldInput + .fieldLabel {
   font-size: 14px;
 }
 
+.historyItem strong,
+.selectedExam strong {
+  line-height: 1.35;
+}
+
 .examLineInfo {
   color: var(--muted);
   font-size: 13px;
@@ -581,7 +632,8 @@ select.fieldInput + .fieldLabel {
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-.themeChip:hover:not(:disabled) {
+.themeChip:hover:not(:disabled),
+.themeChip--active {
   border-color: rgba(79, 106, 245, 0.34);
   background: var(--primary-soft);
   color: var(--primary);
@@ -866,6 +918,10 @@ tr:last-child td {
   animation: slideIn 0.15s ease;
 }
 
+.toast span {
+  line-height: 1.35;
+}
+
 .toast--success svg {
   color: var(--success);
 }
@@ -876,6 +932,317 @@ tr:last-child td {
 
 .fitButton {
   width: fit-content;
+}
+
+.dashboardHeader {
+  align-items: flex-start;
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+}
+
+.dashboardHeaderMeta {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.dashboardHeaderMeta span {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.dashboardHeaderMeta small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.metricGrid,
+.dashboardGrid {
+  display: grid;
+  gap: 16px;
+}
+
+.metricGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dashboardGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.metricCard {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+}
+
+.metricIcon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+  place-items: center;
+  border-radius: 12px;
+}
+
+.metricCard--primary .metricIcon {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.metricCard--success .metricIcon {
+  background: var(--success-soft);
+  color: #147856;
+}
+
+.metricCard--warning .metricIcon {
+  background: var(--warning-soft);
+  color: #b7791f;
+}
+
+.metricCard span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.metricCard strong {
+  display: block;
+  color: var(--text);
+  font-size: 30px;
+  line-height: 1.1;
+  margin-top: 4px;
+}
+
+.chartCard,
+.activityCard {
+  display: grid;
+  gap: 16px;
+}
+
+.cardTitle {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.cardTitle span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.chartTooltip {
+  display: grid;
+  gap: 4px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  padding: 10px 12px;
+}
+
+.chartTooltip strong,
+.chartTooltip span {
+  font-size: 12px;
+}
+
+.activityTable tbody tr:nth-child(even) td {
+  background: #fbfcff;
+}
+
+.miniProgressCell {
+  align-items: center;
+  display: grid;
+  gap: 7px;
+  grid-template-columns: minmax(70px, 120px) max-content;
+}
+
+.miniProgressCell .progress {
+  height: 6px;
+}
+
+.miniProgressCell span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.quickActions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.modalBackdrop {
+  position: fixed;
+  z-index: 70;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(26, 26, 46, 0.32);
+  padding: 18px;
+}
+
+.quickModal {
+  display: grid;
+  width: min(100%, 560px);
+  gap: 16px;
+  max-height: calc(100vh - 36px);
+  overflow: auto;
+}
+
+.modalHeader {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.candidateDashboard {
+  align-items: start;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) 320px;
+}
+
+.candidateMain,
+.availableExamsCard,
+.recentEssays,
+.availableExamList,
+.recentEssayList {
+  display: grid;
+  gap: 16px;
+}
+
+.welcomeCard {
+  align-items: center;
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+}
+
+.welcomeCard h1 {
+  margin-bottom: 8px;
+}
+
+.welcomeCard p:not(.eyebrow) {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.welcomeAction {
+  min-width: 170px;
+}
+
+.candidateMetricGrid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.candidateMetricCard {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  padding: 18px;
+}
+
+.candidateMetricCard strong {
+  display: block;
+  color: var(--text);
+  font-size: 22px;
+  line-height: 1.15;
+  margin-top: 4px;
+}
+
+.candidateMetricCard span:not(.metricIcon) {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.recentEssayCard {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+  color: var(--text);
+  padding: 15px 16px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.recentEssayCard:hover {
+  border-color: rgba(79, 106, 245, 0.32);
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+
+.recentEssayCard div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.recentEssayCard strong {
+  color: var(--text);
+  line-height: 1.35;
+}
+
+.recentEssayCard span,
+.recentEssayCard small,
+.availableExamItem span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.recentEssayMeta {
+  display: grid;
+  min-width: 170px;
+  justify-items: end;
+  gap: 9px;
+}
+
+.availableExams {
+  position: sticky;
+  top: 96px;
+}
+
+.availableExamItem {
+  align-items: center;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+}
+
+.availableExamItem:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.availableExamItem div {
+  display: grid;
+  gap: 3px;
+}
+
+.availableExamItem strong {
+  line-height: 1.35;
 }
 
 @keyframes spin {
@@ -926,8 +1293,16 @@ tr:last-child td {
   }
 
   .resultSummary,
-  .formGrid {
+  .formGrid,
+  .metricGrid,
+  .dashboardGrid,
+  .candidateDashboard,
+  .candidateMetricGrid {
     grid-template-columns: 1fr;
+  }
+
+  .availableExams {
+    position: static;
   }
 }
 
@@ -941,9 +1316,13 @@ tr:last-child td {
   .userCluster,
   .userMeta,
   .sectionHeader,
+  .dashboardHeader,
+  .dashboardHeaderMeta,
+  .welcomeCard,
   .formFooter,
   .cardFooter,
   .historyItem,
+  .recentEssayCard,
   .criteriaHeader,
   .criterionTop {
     align-items: stretch;
@@ -960,8 +1339,26 @@ tr:last-child td {
 
   .buttonGroup,
   .uiButton,
-  .fitButton {
+  .fitButton,
+  .quickActions {
     width: 100%;
+  }
+
+  .quickActions {
+    align-items: stretch;
+  }
+
+  .candidateMetricGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .recentEssayMeta {
+    min-width: 0;
+    justify-items: stretch;
+  }
+
+  .welcomeAction {
+    min-width: 0;
   }
 
   .card,

@@ -20,6 +20,7 @@ import redAi.backend.redAi.service.ai.AiCorrectionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +30,7 @@ import java.util.List;
 public class RedacaoService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RedacaoService.class);
+    private static final int LIMITE_TENTATIVAS = 3;
 
     private final RedacaoRepository redacaoRepository;
     private final ResultadoCorrecaoRepository resultadoCorrecaoRepository;
@@ -63,7 +65,10 @@ public class RedacaoService {
 
         Redacao redacao = Redacao.builder()
                 .texto(request.texto().trim())
+                .titulo(request.titulo().trim())
+                .tema(request.tema().trim())
                 .status(StatusRedacao.PENDENTE)
+                .tentativas(0)
                 .candidato(candidato)
                 .prova(prova)
                 .build();
@@ -123,6 +128,34 @@ public class RedacaoService {
                 .toList();
     }
 
+    @Transactional
+    public RedacaoResponse reenviar(String candidatoEmail, Long id) {
+        Redacao redacao = redacaoRepository.findWithCandidatoAndResultadoById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Redacao nao encontrada"));
+
+        if (!redacao.getCandidato().getEmail().equals(candidatoEmail)) {
+            throw new AccessDeniedException("Redacao pertence a outro candidato");
+        }
+
+        if (redacao.getStatus() != StatusRedacao.ERRO) {
+            throw new BusinessException("Apenas redacoes com erro podem ser reenviadas");
+        }
+
+        if (redacao.getTentativas() >= LIMITE_TENTATIVAS) {
+            throw new BusinessException("Limite de tentativas atingido");
+        }
+
+        if (redacao.getResultado() != null) {
+            resultadoCorrecaoRepository.deleteByRedacaoId(redacao.getId());
+            redacao.setResultado(null);
+        }
+
+        redacao.setTentativas(redacao.getTentativas() + 1);
+        redacao.setStatus(StatusRedacao.PENDENTE);
+
+        return RedacaoResponse.fromEntity(redacaoRepository.save(redacao), objectMapper);
+    }
+
     private User buscarCandidato(String candidatoEmail) {
         return userRepository.findByEmail(candidatoEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("Candidato nao encontrado"));
@@ -130,7 +163,7 @@ public class RedacaoService {
 
     private String toJson(AiCorrectionResult result) {
         try {
-            return objectMapper.writeValueAsString(result.avaliacoesCriterios());
+            return objectMapper.writeValueAsString(result);
         } catch (JsonProcessingException exception) {
             throw new IllegalStateException("Nao foi possivel serializar as avaliacoes da IA", exception);
         }

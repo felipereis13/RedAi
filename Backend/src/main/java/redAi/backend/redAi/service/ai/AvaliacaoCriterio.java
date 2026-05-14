@@ -4,6 +4,7 @@ public record AvaliacaoCriterio(
         String nome,
         double notaObtida,
         double notaMaxima,
-        String comentario
+        String comentario,
+        String sugestaoMelhoria
 ) {
 }

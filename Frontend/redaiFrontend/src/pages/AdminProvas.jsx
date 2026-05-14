@@ -185,6 +185,8 @@ function AdminProvas() {
       return
     }
 
+    setSaving(true)
+
     try {
       await desativarProva(prova.id)
       setFeedback({ type: 'success', message: 'Prova desativada com sucesso.' })
@@ -193,6 +195,8 @@ function AdminProvas() {
     } catch {
       setFeedback({ type: 'error', message: 'Nao foi possivel desativar a prova.' })
       toast?.showToast('Nao foi possivel desativar a prova.', 'error')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -204,7 +208,7 @@ function AdminProvas() {
           <h2>{editingId ? 'Editar prova' : 'Criar nova prova'}</h2>
         </div>
         {editingId && (
-          <Button variant="secondary" onClick={limparFormulario}>
+          <Button disabled={saving} variant="secondary" onClick={limparFormulario}>
             Cancelar edicao
           </Button>
         )}
@@ -217,6 +221,7 @@ function AdminProvas() {
       <Card as="form" className="adminForm" onSubmit={handleSubmit}>
         <div className="formGrid">
           <Input
+            disabled={saving}
             error={touched.cargo && !form.cargo ? 'Informe o cargo.' : ''}
             label="Cargo"
             onBlur={() => setTouched((current) => ({ ...current, cargo: true }))}
@@ -226,6 +231,7 @@ function AdminProvas() {
             value={form.cargo}
           />
           <Input
+            disabled={saving}
             error={touched.banca && !form.banca ? 'Informe a banca.' : ''}
             label="Banca"
             onBlur={() => setTouched((current) => ({ ...current, banca: true }))}
@@ -235,6 +241,7 @@ function AdminProvas() {
             value={form.banca}
           />
           <Input
+            disabled={saving}
             error={touched.estado && form.estado.length !== 2 ? 'Use a sigla com 2 letras.' : ''}
             label="Estado"
             maxLength={2}
@@ -245,6 +252,7 @@ function AdminProvas() {
             value={form.estado}
           />
           <Input
+            disabled={saving}
             error={touched.notaMaxima && notaMaximaProva <= 0 ? 'Informe uma nota maior que zero.' : ''}
             label="Nota maxima"
             min="0.1"
@@ -256,6 +264,7 @@ function AdminProvas() {
             value={form.notaMaxima}
           />
           <Input
+            disabled={saving}
             error={
               touched.quantidadeLinhas && !isQuantidadeLinhasValida(form.quantidadeLinhas)
                 ? 'Informe entre 10 e 60 linhas.'
@@ -275,6 +284,7 @@ function AdminProvas() {
 
         <Input
           as="textarea"
+          disabled={saving}
           label="Descricao"
           onChange={(event) => handleFieldChange('descricao', event.target.value)}
           rows={4}
@@ -291,7 +301,7 @@ function AdminProvas() {
 
         <div className="criteriaHeader">
           <h3>Criterios de correcao</h3>
-          <Button variant="secondary" onClick={adicionarCriterio}>
+          <Button disabled={saving} variant="secondary" onClick={adicionarCriterio}>
             Adicionar criterio
           </Button>
         </div>
@@ -301,12 +311,13 @@ function AdminProvas() {
             <article className="criterionCard" key={index}>
               <div className="criterionTop">
                 <strong>Criterio {index + 1}</strong>
-                <Button variant="ghostDanger" onClick={() => removerCriterio(index)}>
+                <Button disabled={saving} variant="ghostDanger" onClick={() => removerCriterio(index)}>
                   Remover
                 </Button>
               </div>
               <div className="formGrid">
                 <Input
+                  disabled={saving}
                   error={touched.criterios && !criterio.nome ? 'Informe o nome do criterio.' : ''}
                   label="Nome"
                   onChange={(event) => handleCriterioChange(index, 'nome', event.target.value)}
@@ -315,6 +326,7 @@ function AdminProvas() {
                   value={criterio.nome}
                 />
                 <Input
+                  disabled={saving}
                   error={touched.criterios && toNumber(criterio.notaMaxima) <= 0 ? 'Nota maior que zero.' : ''}
                   label="Nota maxima"
                   min="0.1"
@@ -327,6 +339,7 @@ function AdminProvas() {
               </div>
               <Input
                 as="textarea"
+                disabled={saving}
                 error={touched.criterios && !criterio.descricao ? 'Descreva o criterio.' : ''}
                 label="Descricao"
                 onChange={(event) => handleCriterioChange(index, 'descricao', event.target.value)}
@@ -388,12 +401,12 @@ function AdminProvas() {
                   </td>
                   <td>
                     <div className="tableActions">
-                      <Button variant="secondary" onClick={() => editarProva(prova)}>
+                      <Button disabled={saving} variant="secondary" onClick={() => editarProva(prova)}>
                         Editar
                       </Button>
                       <Button
                         variant="danger"
-                        disabled={!prova.ativo}
+                        disabled={saving || !prova.ativo}
                         onClick={() => handleDesativar(prova)}
                       >
                         Desativar

@@ -108,6 +108,13 @@ public class AiCorrectionServiceImpl implements AiCorrectionService {
                   ]
                 }
                 """);
+        sb.append("""
+
+                Inclua tambem no JSON raiz o campo redacaoCorrigida, com uma versao completa reescrita da redacao com todas as melhorias aplicadas, como se fosse a redacao ideal.
+                Em cada item de avaliacoesCriterios, inclua sugestaoMelhoria.
+                Para cada criterio com nota abaixo de 70% da notaMaxima, sugestaoMelhoria deve conter um trecho reescrito concreto de como melhorar aquele aspecto na redacao, maximo 3 frases, em portugues formal.
+                Para criterios com nota >= 70%, sugestaoMelhoria deve ser null.
+                """);
         return sb.toString();
     }
 

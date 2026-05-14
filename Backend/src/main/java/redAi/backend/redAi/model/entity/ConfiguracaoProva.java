@@ -65,4 +65,8 @@ public class ConfiguracaoProva {
     @Builder.Default
     @OneToMany(mappedBy = "prova")
     private List<Redacao> redacoes = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "configuracaoProva", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SugestaoTema> sugestoesTema = new ArrayList<>();
 }

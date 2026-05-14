@@ -150,81 +150,85 @@ function SubmissaoRedacao() {
             </Input>
           )}
 
-          {provaSelecionada && (
-            <p className="examLineInfo">Esta prova permite ate {provaSelecionada.quantidadeLinhas} linhas</p>
-          )}
+          {provas.length > 0 && (
+            <>
+              {provaSelecionada && (
+                <p className="examLineInfo">Esta prova permite ate {provaSelecionada.quantidadeLinhas} linhas</p>
+              )}
 
-          {provaSelecionada && (
-            <div className="selectedExam">
-              <strong>{provaSelecionada.cargo}</strong>
-              <span>
-                {provaSelecionada.banca} - {provaSelecionada.estado} - nota maxima{' '}
-                {formatNumber(provaSelecionada.notaMaxima)} - {provaSelecionada.quantidadeLinhas} linhas
-              </span>
-            </div>
-          )}
+              {provaSelecionada && (
+                <div className="selectedExam">
+                  <strong>{provaSelecionada.cargo}</strong>
+                  <span>
+                    {provaSelecionada.banca} - {provaSelecionada.estado} - nota maxima{' '}
+                    {formatNumber(provaSelecionada.notaMaxima)} - {provaSelecionada.quantidadeLinhas} linhas
+                  </span>
+                </div>
+              )}
 
-          <div className="themeBlock">
-            <Input
-              disabled={submitting}
-              error={touched.tema && temaVazio ? 'Informe o tema da redacao.' : ''}
-              label="Tema"
-              onBlur={() => setTouched((current) => ({ ...current, tema: true }))}
-              onChange={(event) => setTema(event.target.value)}
-              required
-              value={tema}
-            />
-            <div className="themeChips" aria-label="Sugestoes de tema">
-              {TEMAS_SUGERIDOS.map((temaSugerido) => (
-                <button
-                  className="themeChip"
+              <div className="themeBlock">
+                <Input
                   disabled={submitting}
-                  key={temaSugerido}
-                  onClick={() => handleTemaChipClick(temaSugerido)}
-                  type="button"
-                >
-                  {temaSugerido}
-                </button>
-              ))}
-            </div>
-          </div>
+                  error={touched.tema && temaVazio ? 'Informe o tema da redacao.' : ''}
+                  label="Tema"
+                  onBlur={() => setTouched((current) => ({ ...current, tema: true }))}
+                  onChange={(event) => setTema(event.target.value)}
+                  required
+                  value={tema}
+                />
+                <div className="themeChips" aria-label="Sugestoes de tema">
+                  {TEMAS_SUGERIDOS.map((temaSugerido) => (
+                    <button
+                      className={tema === temaSugerido ? 'themeChip themeChip--active' : 'themeChip'}
+                      disabled={submitting}
+                      key={temaSugerido}
+                      onClick={() => handleTemaChipClick(temaSugerido)}
+                      type="button"
+                    >
+                      {temaSugerido}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-          <Input
-            disabled={submitting}
-            error={touched.titulo && tituloVazio ? 'Informe o titulo da redacao.' : ''}
-            label="Titulo"
-            onBlur={() => setTouched((current) => ({ ...current, titulo: true }))}
-            onChange={(event) => setTitulo(event.target.value)}
-            required
-            value={titulo}
-          />
+              <Input
+                disabled={submitting}
+                error={touched.titulo && tituloVazio ? 'Informe o titulo da redacao.' : ''}
+                label="Titulo"
+                onBlur={() => setTouched((current) => ({ ...current, titulo: true }))}
+                onChange={(event) => setTitulo(event.target.value)}
+                required
+                value={titulo}
+              />
 
-          <div className="submissionEditor">
-            <FolhaRedacao
-              disabled={submitting || !provaSelecionada}
-              maxLength={MAX_TEXTO}
-              onChange={handleTextoChange}
-              onLinhaCountChange={handleLinhaCountChange}
-              placeholder={!provaSelecionada ? 'Selecione uma prova para comecar a escrever' : ''}
-              totalLinhas={totalLinhas}
-              value={texto}
-            />
-            {touched.texto && textoVazio && (
-              <span className="fieldError">Digite sua redacao antes de enviar.</span>
-            )}
-            {touched.texto && !textoVazio && linhasInsuficientes && (
-              <span className="fieldError">Escreva pelo menos {MIN_LINHAS} linhas antes de enviar.</span>
-            )}
-          </div>
+              <div className="submissionEditor">
+                <FolhaRedacao
+                  disabled={submitting || !provaSelecionada}
+                  maxLength={MAX_TEXTO}
+                  onChange={handleTextoChange}
+                  onLinhaCountChange={handleLinhaCountChange}
+                  placeholder={!provaSelecionada ? 'Selecione uma prova para comecar a escrever' : ''}
+                  totalLinhas={totalLinhas}
+                  value={texto}
+                />
+                {touched.texto && textoVazio && (
+                  <span className="fieldError">Digite sua redacao antes de enviar.</span>
+                )}
+                {touched.texto && !textoVazio && linhasInsuficientes && (
+                  <span className="fieldError">Escreva pelo menos {MIN_LINHAS} linhas antes de enviar.</span>
+                )}
+              </div>
 
-          <div className="formFooter">
-            <span className="counter">
-              Minimo de {MIN_LINHAS} linhas para envio
-            </span>
-            <Button disabled={!canSubmit} loading={submitting} type="submit">
-              Enviar para correcao
-            </Button>
-          </div>
+              <div className="formFooter">
+                <span className="counter">
+                  Minimo de {MIN_LINHAS} linhas para envio
+                </span>
+                <Button disabled={!canSubmit} loading={submitting} type="submit">
+                  Enviar para correcao
+                </Button>
+              </div>
+            </>
+          )}
 
           {error && <p className="formError">{error}</p>}
         </Card>

@@ -114,6 +114,11 @@ public class OpenAiCorrectionService implements AiCorrectionService {
         prompt.append("A notaTotal deve ser a soma das notas obtidas nos critÃ©rios e nÃ£o pode ultrapassar ");
         prompt.append(notaMaximaProva).append(". ");
         prompt.append("O percentualAproveitamento deve ser (notaTotal / notaMaximaProva) * 100. ");
+        prompt.append("Para cada criterio com nota abaixo de 70% da notaMaxima, forneca em sugestaoMelhoria ");
+        prompt.append("um trecho reescrito concreto de como melhorar aquele aspecto na redacao, maximo 3 frases, em portugues formal. ");
+        prompt.append("Para criterios com nota maior ou igual a 70%, deixe sugestaoMelhoria como null. ");
+        prompt.append("Retorne tambem redacaoCorrigida: uma versao completa reescrita da redacao com todas as melhorias aplicadas, ");
+        prompt.append("como se fosse a redacao ideal. ");
         prompt.append("Retorne APENAS JSON valido, sem markdown, sem texto antes ou depois.\n\n");
         prompt.append("notaMaximaProva: ").append(notaMaximaProva).append("\n");
         prompt.append("Criterios:\n");
@@ -133,11 +138,12 @@ public class OpenAiCorrectionService implements AiCorrectionService {
         avaliacaoProperties.put("notaObtida", Map.of("type", "number"));
         avaliacaoProperties.put("notaMaxima", Map.of("type", "number"));
         avaliacaoProperties.put("comentario", Map.of("type", "string"));
+        avaliacaoProperties.put("sugestaoMelhoria", Map.of("type", List.of("string", "null")));
 
         Map<String, Object> avaliacaoSchema = new LinkedHashMap<>();
         avaliacaoSchema.put("type", "object");
         avaliacaoSchema.put("additionalProperties", false);
-        avaliacaoSchema.put("required", List.of("nome", "notaObtida", "notaMaxima", "comentario"));
+        avaliacaoSchema.put("required", List.of("nome", "notaObtida", "notaMaxima", "comentario", "sugestaoMelhoria"));
         avaliacaoSchema.put("properties", avaliacaoProperties);
 
         Map<String, Object> resultProperties = new LinkedHashMap<>();
@@ -145,6 +151,7 @@ public class OpenAiCorrectionService implements AiCorrectionService {
         resultProperties.put("notaMaximaProva", Map.of("type", "number"));
         resultProperties.put("percentualAproveitamento", Map.of("type", "number"));
         resultProperties.put("feedbackGeral", Map.of("type", "string"));
+        resultProperties.put("redacaoCorrigida", Map.of("type", "string"));
         resultProperties.put("avaliacoesCriterios", Map.of("type", "array", "items", avaliacaoSchema));
 
         Map<String, Object> schema = new LinkedHashMap<>();
@@ -155,6 +162,7 @@ public class OpenAiCorrectionService implements AiCorrectionService {
                 "notaMaximaProva",
                 "percentualAproveitamento",
                 "feedbackGeral",
+                "redacaoCorrigida",
                 "avaliacoesCriterios"
         ));
         schema.put("properties", resultProperties);
@@ -174,6 +182,9 @@ public class OpenAiCorrectionService implements AiCorrectionService {
         if (result.feedbackGeral() == null || result.feedbackGeral().isBlank()) {
             throw new AiServiceException("Resposta da IA nao contem feedbackGeral");
         }
+        if (result.redacaoCorrigida() == null || result.redacaoCorrigida().isBlank()) {
+            throw new AiServiceException("Resposta da IA nao contem redacaoCorrigida");
+        }
         if (result.avaliacoesCriterios() == null || result.avaliacoesCriterios().isEmpty()) {
             throw new AiServiceException("Resposta da IA nao contem avaliacoes por criterio");
         }
@@ -183,6 +194,7 @@ public class OpenAiCorrectionService implements AiCorrectionService {
                 notaMaximaProva,
                 calcularPercentual(result.notaTotal(), notaMaximaProva),
                 result.feedbackGeral(),
+                result.redacaoCorrigida(),
                 result.avaliacoesCriterios()
         );
     }

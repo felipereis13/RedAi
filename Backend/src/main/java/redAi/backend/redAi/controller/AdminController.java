@@ -1,8 +1,11 @@
 package redAi.backend.redAi.controller;
 
 import redAi.backend.redAi.model.dto.request.ProvaRequest;
+import redAi.backend.redAi.model.dto.request.SugestaoTemaRequest;
 import redAi.backend.redAi.model.dto.response.ProvaResponse;
+import redAi.backend.redAi.model.dto.response.SugestaoTemaResponse;
 import redAi.backend.redAi.service.ProvaService;
+import redAi.backend.redAi.service.SugestaoTemaService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,9 +25,11 @@ import java.util.List;
 public class AdminController {
 
     private final ProvaService provaService;
+    private final SugestaoTemaService sugestaoTemaService;
 
-    public AdminController(ProvaService provaService) {
+    public AdminController(ProvaService provaService, SugestaoTemaService sugestaoTemaService) {
         this.provaService = provaService;
+        this.sugestaoTemaService = sugestaoTemaService;
     }
 
     @GetMapping("/provas")
@@ -48,6 +53,34 @@ public class AdminController {
     @DeleteMapping("/provas/{id}")
     public ResponseEntity<Void> desativarProva(@PathVariable Long id) {
         provaService.desativar(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/provas/{idProva}/sugestoes")
+    public ResponseEntity<List<SugestaoTemaResponse>> listarSugestoes(@PathVariable Long idProva) {
+        return ResponseEntity.ok(sugestaoTemaService.listarAdmin(idProva));
+    }
+
+    @PostMapping("/provas/{idProva}/sugestoes")
+    public ResponseEntity<SugestaoTemaResponse> criarSugestao(
+            @PathVariable Long idProva,
+            @Valid @RequestBody SugestaoTemaRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(sugestaoTemaService.criar(idProva, request));
+    }
+
+    @PutMapping("/provas/{idProva}/sugestoes/{id}")
+    public ResponseEntity<SugestaoTemaResponse> atualizarSugestao(
+            @PathVariable Long idProva,
+            @PathVariable Long id,
+            @Valid @RequestBody SugestaoTemaRequest request
+    ) {
+        return ResponseEntity.ok(sugestaoTemaService.atualizar(idProva, id, request));
+    }
+
+    @DeleteMapping("/provas/{idProva}/sugestoes/{id}")
+    public ResponseEntity<Void> desativarSugestao(@PathVariable Long idProva, @PathVariable Long id) {
+        sugestaoTemaService.desativar(idProva, id);
         return ResponseEntity.noContent().build();
     }
 }

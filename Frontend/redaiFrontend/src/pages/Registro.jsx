@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Sparkles } from 'lucide-react'
 import api from '../api/axiosInstance'
 import Button from '../components/Button'
 import Card from '../components/Card'
@@ -44,7 +45,10 @@ function Registro() {
   return (
     <main className="authPage">
       <section className="authPanel" aria-labelledby="registro-title">
-        <div>
+        <div className="authIntro">
+          <span className="brandMark" aria-hidden="true">
+            <Sparkles size={18} />
+          </span>
           <p className="eyebrow">RedAI</p>
           <h1 id="registro-title">Criar conta</h1>
           <p className="muted">Cadastre-se para acessar as provas disponiveis.</p>

@@ -39,10 +39,20 @@ public class Redacao {
     @Column(nullable = false, length = 5000)
     private String texto;
 
+    @Column(nullable = false, length = 180)
+    private String titulo;
+
+    @Column(nullable = false, length = 220)
+    private String tema;
+
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private StatusRedacao status = StatusRedacao.PENDENTE;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private int tentativas = 0;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "candidato_id", nullable = false)

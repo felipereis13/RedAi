@@ -1,10 +1,11 @@
-import { BookOpen, FilePlus2, History } from 'lucide-react'
+import { BookOpen, FilePlus2, History, LayoutDashboard } from 'lucide-react'
 import { NavLink, Outlet } from 'react-router-dom'
 import Navbar from './Navbar'
 import Sidebar from './Sidebar'
 
 const candidateItems = [
-  { to: '/candidato', label: 'Historico', icon: History, end: true },
+  { to: '/candidato', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/candidato/historico', label: 'Historico', icon: History },
   { to: '/candidato/provas', label: 'Provas', icon: BookOpen },
   { to: '/candidato/redacoes/nova', label: 'Nova redacao', icon: FilePlus2 },
 ]

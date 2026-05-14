@@ -17,4 +17,6 @@ public interface ConfiguracaoProvaRepository extends JpaRepository<ConfiguracaoP
 
     @EntityGraph(attributePaths = "criterios")
     Optional<ConfiguracaoProva> findWithCriteriosById(Long id);
+
+    long countByAtivoTrue();
 }

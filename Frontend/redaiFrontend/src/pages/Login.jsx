@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Sparkles } from 'lucide-react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import Button from '../components/Button'
 import Card from '../components/Card'
@@ -45,7 +46,10 @@ function Login() {
   return (
     <main className="authPage">
       <section className="authPanel" aria-labelledby="login-title">
-        <div>
+        <div className="authIntro">
+          <span className="brandMark" aria-hidden="true">
+            <Sparkles size={18} />
+          </span>
           <p className="eyebrow">RedAI</p>
           <h1 id="login-title">Entrar</h1>
           <p className="muted">Acesse sua area para submeter e acompanhar redacoes.</p>

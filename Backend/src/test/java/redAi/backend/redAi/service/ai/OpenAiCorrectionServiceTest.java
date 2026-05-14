@@ -57,6 +57,7 @@ class OpenAiCorrectionServiceTest {
         assertThat(result.notaMaximaProva()).isEqualTo(10.0);
         assertThat(result.percentualAproveitamento()).isEqualTo(80.0);
         assertThat(result.feedbackGeral()).isEqualTo("Bom dominio do tema, com ajustes pontuais.");
+        assertThat(result.redacaoCorrigida()).isEqualTo("Redacao corrigida completa.");
         assertThat(result.avaliacoesCriterios())
                 .hasSize(2)
                 .extracting(AvaliacaoCriterio::nome)
@@ -68,6 +69,7 @@ class OpenAiCorrectionServiceTest {
         assertThat(instructions).contains("Argumentacao", "Organizacao das ideias", "notaMaxima: 6.0");
         assertThat(instructions).contains("Norma culta", "Uso adequado da lingua portuguesa", "notaMaxima: 4.0");
         assertThat(instructions).contains("Retorne APENAS JSON valido, sem markdown");
+        assertThat(instructions).contains("sugestaoMelhoria", "redacaoCorrigida");
     }
 
     private List<CriterioCorrecao> criterios() {
@@ -91,9 +93,10 @@ class OpenAiCorrectionServiceTest {
                 10.0,
                 80.0,
                 "Bom dominio do tema, com ajustes pontuais.",
+                "Redacao corrigida completa.",
                 List.of(
-                        new AvaliacaoCriterio("Argumentacao", 5.0, 6.0, "Argumentos pertinentes."),
-                        new AvaliacaoCriterio("Norma culta", 3.0, 4.0, "Poucos desvios gramaticais.")
+                        new AvaliacaoCriterio("Argumentacao", 5.0, 6.0, "Argumentos pertinentes.", null),
+                        new AvaliacaoCriterio("Norma culta", 3.0, 4.0, "Poucos desvios gramaticais.", null)
                 )
         ));
 

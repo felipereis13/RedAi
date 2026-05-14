@@ -9,8 +9,11 @@ import java.time.OffsetDateTime;
 public record RedacaoResponse(
         Long id,
         Long idProva,
+        String titulo,
+        String tema,
         String texto,
         StatusRedacao status,
+        int tentativas,
         OffsetDateTime createdAt,
         ResultadoResponse resultado
 ) {
@@ -19,8 +22,11 @@ public record RedacaoResponse(
         return new RedacaoResponse(
                 redacao.getId(),
                 redacao.getProva().getId(),
+                redacao.getTitulo(),
+                redacao.getTema(),
                 redacao.getTexto(),
                 redacao.getStatus(),
+                redacao.getTentativas(),
                 redacao.getCreatedAt(),
                 redacao.getResultado() == null ? null : ResultadoResponse.fromEntity(redacao.getResultado(), objectMapper)
         );
