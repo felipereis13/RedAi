@@ -12,6 +12,7 @@ function FolhaRedacao({
   placeholder = '',
   maxLength,
   onLinhaCountChange,
+  showFooter = true,
 }) {
   const totalLinhasSeguro = Math.max(1, Number(totalLinhas) || 1)
   const textareaRef = useRef(null)
@@ -148,20 +149,22 @@ function FolhaRedacao({
           {placeholder && !value && <span className="folhaRedacao__placeholder">{placeholder}</span>}
         </div>
 
-        <div className="folhaRedacao__footer">
-          <div className="folhaRedacao__counters">
-            <span className={contadorClassName}>
-              {linhasUtilizadas} / {totalLinhasSeguro} linhas utilizadas
-            </span>
-            {maxLength && (
-              <span className={value.length > maxLength * 0.9 ? 'folhaRedacao__charCounter folhaRedacao__charCounter--warning' : 'folhaRedacao__charCounter'}>
-                {value.length} / {maxLength} caracteres
+        {showFooter && (
+          <div className="folhaRedacao__footer">
+            <div className="folhaRedacao__counters">
+              <span className={contadorClassName}>
+                {linhasUtilizadas} / {totalLinhasSeguro} linhas utilizadas
               </span>
-            )}
+              {maxLength && (
+                <span className={value.length > maxLength * 0.9 ? 'folhaRedacao__charCounter folhaRedacao__charCounter--warning' : 'folhaRedacao__charCounter'}>
+                  {value.length} / {maxLength} caracteres
+                </span>
+              )}
+            </div>
+            {estaNasUltimas && <span className="folhaRedacao__aviso folhaRedacao__aviso--warning">Voce esta nas ultimas linhas</span>}
+            {atingiuLimite && <span className="folhaRedacao__aviso folhaRedacao__aviso--danger">Limite de linhas atingido</span>}
           </div>
-          {estaNasUltimas && <span className="folhaRedacao__aviso folhaRedacao__aviso--warning">Voce esta nas ultimas linhas</span>}
-          {atingiuLimite && <span className="folhaRedacao__aviso folhaRedacao__aviso--danger">Limite de linhas atingido</span>}
-        </div>
+        )}
       </div>
     </div>
   )
