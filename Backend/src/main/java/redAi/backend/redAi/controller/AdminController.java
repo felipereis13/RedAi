@@ -2,12 +2,16 @@ package redAi.backend.redAi.controller;
 
 import redAi.backend.redAi.model.dto.request.ProvaRequest;
 import redAi.backend.redAi.model.dto.request.SugestaoTemaRequest;
+import redAi.backend.redAi.model.dto.response.EspelhoCorrecaoResponse;
 import redAi.backend.redAi.model.dto.response.ProvaResponse;
 import redAi.backend.redAi.model.dto.response.SugestaoTemaResponse;
+import redAi.backend.redAi.model.entity.TipoEspelhoCorrecao;
+import redAi.backend.redAi.service.EspelhoCorrecaoService;
 import redAi.backend.redAi.service.ProvaService;
 import redAi.backend.redAi.service.SugestaoTemaService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,7 +20,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -26,10 +32,16 @@ public class AdminController {
 
     private final ProvaService provaService;
     private final SugestaoTemaService sugestaoTemaService;
+    private final EspelhoCorrecaoService espelhoCorrecaoService;
 
-    public AdminController(ProvaService provaService, SugestaoTemaService sugestaoTemaService) {
+    public AdminController(
+            ProvaService provaService,
+            SugestaoTemaService sugestaoTemaService,
+            EspelhoCorrecaoService espelhoCorrecaoService
+    ) {
         this.provaService = provaService;
         this.sugestaoTemaService = sugestaoTemaService;
+        this.espelhoCorrecaoService = espelhoCorrecaoService;
     }
 
     @GetMapping("/provas")
@@ -81,6 +93,35 @@ public class AdminController {
     @DeleteMapping("/provas/{idProva}/sugestoes/{id}")
     public ResponseEntity<Void> desativarSugestao(@PathVariable Long idProva, @PathVariable Long id) {
         sugestaoTemaService.desativar(idProva, id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/provas/{idProva}/espelhos")
+    public ResponseEntity<List<EspelhoCorrecaoResponse>> listarEspelhos(@PathVariable Long idProva) {
+        return ResponseEntity.ok(espelhoCorrecaoService.listar(idProva));
+    }
+
+    @PostMapping(value = "/provas/{idProva}/espelhos", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<EspelhoCorrecaoResponse> criarEspelho(
+            @PathVariable Long idProva,
+            @RequestPart("titulo") String titulo,
+            @RequestPart("tipo") String tipo,
+            @RequestPart(value = "conteudoTexto", required = false) String conteudoTexto,
+            @RequestPart(value = "arquivo", required = false) MultipartFile arquivo
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(espelhoCorrecaoService.criar(
+                        idProva,
+                        titulo,
+                        TipoEspelhoCorrecao.valueOf(tipo),
+                        conteudoTexto,
+                        arquivo
+                ));
+    }
+
+    @DeleteMapping("/provas/{idProva}/espelhos/{id}")
+    public ResponseEntity<Void> excluirEspelho(@PathVariable Long idProva, @PathVariable Long id) {
+        espelhoCorrecaoService.excluir(idProva, id);
         return ResponseEntity.noContent().build();
     }
 }

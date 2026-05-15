@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final String PROMPT_INJECTION_MESSAGE = "O texto da redação contém conteúdo não permitido.";
+
     @ExceptionHandler(EmailAlreadyRegisteredException.class)
     public ResponseEntity<ApiErrorResponse> handleEmailAlreadyRegistered(EmailAlreadyRegisteredException exception) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
@@ -48,12 +50,15 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiErrorResponse> handleValidation(MethodArgumentNotValidException exception) {
+        boolean promptInjection = exception.getBindingResult().getFieldErrors().stream()
+                .anyMatch(error -> PROMPT_INJECTION_MESSAGE.equals(error.getDefaultMessage()));
+
         String message = exception.getBindingResult().getFieldErrors().stream()
                 .findFirst()
                 .map(error -> error.getDefaultMessage())
-                .orElse("Dados inválidos");
+                .orElse("Dados invalidos");
 
-        return ResponseEntity.badRequest()
+        return ResponseEntity.status(promptInjection ? 422 : 400)
                 .body(ApiErrorResponse.builder().message(message).build());
     }
 }

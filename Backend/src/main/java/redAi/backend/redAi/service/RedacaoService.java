@@ -9,11 +9,14 @@ import redAi.backend.redAi.model.dto.response.EvolucaoNotaResponse;
 import redAi.backend.redAi.model.dto.response.HistoricoRedacaoResponse;
 import redAi.backend.redAi.model.dto.response.RedacaoResponse;
 import redAi.backend.redAi.model.entity.ConfiguracaoProva;
+import redAi.backend.redAi.model.entity.EspelhoCorrecao;
 import redAi.backend.redAi.model.entity.Redacao;
 import redAi.backend.redAi.model.entity.ResultadoCorrecao;
 import redAi.backend.redAi.model.entity.StatusRedacao;
+import redAi.backend.redAi.model.entity.TipoEspelhoCorrecao;
 import redAi.backend.redAi.model.entity.User;
 import redAi.backend.redAi.repository.ConfiguracaoProvaRepository;
+import redAi.backend.redAi.repository.EspelhoCorrecaoRepository;
 import redAi.backend.redAi.repository.RedacaoRepository;
 import redAi.backend.redAi.repository.ResultadoCorrecaoRepository;
 import redAi.backend.redAi.repository.UserRepository;
@@ -46,6 +49,8 @@ public class RedacaoService {
     private final ConfiguracaoProvaRepository provaRepository;
     private final UserRepository userRepository;
     private final AiCorrectionService aiCorrectionService;
+    private final EspelhoCorrecaoRepository espelhoCorrecaoRepository;
+    private final TextoSanitizador textoSanitizador;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public RedacaoService(
@@ -53,13 +58,17 @@ public class RedacaoService {
             ResultadoCorrecaoRepository resultadoCorrecaoRepository,
             ConfiguracaoProvaRepository provaRepository,
             UserRepository userRepository,
-            AiCorrectionService aiCorrectionService
+            AiCorrectionService aiCorrectionService,
+            EspelhoCorrecaoRepository espelhoCorrecaoRepository,
+            TextoSanitizador textoSanitizador
     ) {
         this.redacaoRepository = redacaoRepository;
         this.resultadoCorrecaoRepository = resultadoCorrecaoRepository;
         this.provaRepository = provaRepository;
         this.userRepository = userRepository;
         this.aiCorrectionService = aiCorrectionService;
+        this.espelhoCorrecaoRepository = espelhoCorrecaoRepository;
+        this.textoSanitizador = textoSanitizador;
     }
 
     @Transactional
@@ -96,11 +105,22 @@ public class RedacaoService {
 
             ConfiguracaoProva prova = provaRepository.findWithCriteriosById(redacao.getProva().getId())
                     .orElseThrow(() -> new ResourceNotFoundException("Prova nao encontrada"));
+            List<EspelhoCorrecao> espelhos = espelhoCorrecaoRepository.findByConfiguracaoProvaIdAndTipoOrderByOrdemAsc(
+                    prova.getId(),
+                    TipoEspelhoCorrecao.ESPELHO
+            );
+            List<EspelhoCorrecao> redacoesModelo = espelhoCorrecaoRepository.findByConfiguracaoProvaIdAndTipoOrderByOrdemAsc(
+                    prova.getId(),
+                    TipoEspelhoCorrecao.REDACAO_MODELO
+            );
+            String textoSanitizado = textoSanitizador.sanitizar(redacao.getId(), redacao.getTexto());
 
             AiCorrectionResult result = aiCorrectionService.correct(
-                    redacao.getTexto(),
+                    textoSanitizado,
                     prova.getCriterios(),
-                    prova.getNotaMaxima()
+                    prova.getNotaMaxima(),
+                    espelhos,
+                    redacoesModelo
             );
 
             ResultadoCorrecao resultado = ResultadoCorrecao.builder()

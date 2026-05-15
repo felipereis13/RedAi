@@ -3,6 +3,7 @@ package redAi.backend.redAi.model.dto.request;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import redAi.backend.redAi.validation.SemPromptInjection;
 
 public record SubmissaoRedacaoRequest(
         @NotNull(message = "idProva e obrigatorio")
@@ -17,6 +18,7 @@ public record SubmissaoRedacaoRequest(
 
         @NotBlank(message = "Texto da redacao e obrigatorio")
         @Size(max = 5000, message = "Texto da redacao deve ter no maximo 5000 caracteres")
+        @SemPromptInjection(message = "O texto da redação contém conteúdo não permitido.")
         String texto
 ) {
 }

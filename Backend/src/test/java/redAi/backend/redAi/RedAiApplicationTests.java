@@ -12,16 +12,22 @@ import redAi.backend.redAi.repository.RedacaoRepository;
 import redAi.backend.redAi.repository.ResultadoCorrecaoRepository;
 import redAi.backend.redAi.repository.UserRepository;
 import redAi.backend.redAi.security.JwtUtil;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.io.ByteArrayOutputStream;
 
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -283,6 +289,48 @@ class RedAiApplicationTests {
 	}
 
 	@Test
+	void uploadEspelhoMultipartRespeitaAutenticacaoEPermitePdfOuTexto() throws Exception {
+		ConfiguracaoProva prova = provaRepository.save(ConfiguracaoProva.builder()
+				.cargo("Analista Multipart")
+				.banca("CEBRASPE")
+				.estado("DF")
+				.descricao("Prova discursiva")
+				.notaMaxima(10.0)
+				.quantidadeLinhas(30)
+				.ativo(true)
+				.build());
+		String adminToken = jwtUtil.generateToken("admin.multipart@example.com", "ADMIN");
+		String candidatoToken = jwtUtil.generateToken("candidato.multipart@example.com", "CANDIDATO");
+
+		mockMvc.perform(multipart("/api/admin/provas/{idProva}/espelhos", prova.getId())
+						.file(part("titulo", "Espelho PDF"))
+						.file(part("tipo", "ESPELHO"))
+						.file(new MockMultipartFile("arquivo", "espelho.pdf", "application/pdf", pdfEmBranco()))
+						.header("Authorization", "Bearer " + adminToken))
+				.andExpect(status().isCreated());
+
+		mockMvc.perform(multipart("/api/admin/provas/{idProva}/espelhos", prova.getId())
+						.file(part("titulo", "Espelho sem token"))
+						.file(part("tipo", "ESPELHO"))
+						.file(new MockMultipartFile("arquivo", "espelho.pdf", "application/pdf", pdfEmBranco())))
+				.andExpect(status().isUnauthorized());
+
+		mockMvc.perform(multipart("/api/admin/provas/{idProva}/espelhos", prova.getId())
+						.file(part("titulo", "Espelho candidato"))
+						.file(part("tipo", "ESPELHO"))
+						.file(new MockMultipartFile("arquivo", "espelho.pdf", "application/pdf", pdfEmBranco()))
+						.header("Authorization", "Bearer " + candidatoToken))
+				.andExpect(status().isForbidden());
+
+		mockMvc.perform(multipart("/api/admin/provas/{idProva}/espelhos", prova.getId())
+						.file(part("titulo", "Modelo texto"))
+						.file(part("tipo", "REDACAO_MODELO"))
+						.file(part("conteudoTexto", "Texto de referencia para correcao."))
+						.header("Authorization", "Bearer " + adminToken))
+				.andExpect(status().isCreated());
+	}
+
+	@Test
 	void historicoEEvolucaoDoCandidatoFuncionamComFiltros() throws Exception {
 		User candidato = userRepository.save(User.builder()
 				.nome("Candidato Historico")
@@ -364,6 +412,19 @@ class RedAiApplicationTests {
 				.andExpect(jsonPath("$[0].percentualAproveitamento").value(80.0))
 				.andExpect(jsonPath("$[0].notaTotal").value(8.0))
 				.andExpect(jsonPath("$[0].notaMaximaProva").value(10.0));
+	}
+
+	private MockMultipartFile part(String nome, String valor) {
+		return new MockMultipartFile(nome, "", "text/plain", valor.getBytes());
+	}
+
+	private byte[] pdfEmBranco() throws Exception {
+		try (PDDocument document = new PDDocument();
+			 ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+			document.addPage(new PDPage());
+			document.save(output);
+			return output.toByteArray();
+		}
 	}
 
 }

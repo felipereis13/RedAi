@@ -50,7 +50,9 @@ class OpenAiCorrectionServiceTest {
         AiCorrectionResult result = service.correct(
                 "Texto da redacao para correcao.",
                 criterios(),
-                10.0
+                10.0,
+                List.of(),
+                List.of()
         );
 
         assertThat(result.notaTotal()).isEqualTo(8.0);
