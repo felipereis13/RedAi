@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import redAi.backend.redAi.exception.BusinessException;
 import redAi.backend.redAi.exception.ResourceNotFoundException;
 import redAi.backend.redAi.model.dto.request.SubmissaoRedacaoRequest;
+import redAi.backend.redAi.model.dto.response.EvolucaoNotaResponse;
+import redAi.backend.redAi.model.dto.response.HistoricoRedacaoResponse;
 import redAi.backend.redAi.model.dto.response.RedacaoResponse;
 import redAi.backend.redAi.model.entity.ConfiguracaoProva;
 import redAi.backend.redAi.model.entity.Redacao;
@@ -19,18 +21,25 @@ import redAi.backend.redAi.service.ai.AiCorrectionResult;
 import redAi.backend.redAi.service.ai.AiCorrectionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 public class RedacaoService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RedacaoService.class);
     private static final int LIMITE_TENTATIVAS = 3;
+    private static final ZoneId ZONE_ID = ZoneId.of("America/Sao_Paulo");
 
     private final RedacaoRepository redacaoRepository;
     private final ResultadoCorrecaoRepository resultadoCorrecaoRepository;
@@ -65,7 +74,7 @@ public class RedacaoService {
 
         Redacao redacao = Redacao.builder()
                 .texto(request.texto().trim())
-                .titulo(request.titulo().trim())
+                .titulo(resolveTitulo(request))
                 .tema(request.tema().trim())
                 .status(StatusRedacao.PENDENTE)
                 .tentativas(0)
@@ -128,6 +137,31 @@ public class RedacaoService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public Page<HistoricoRedacaoResponse> historico(
+            String candidatoEmail,
+            Long idProva,
+            String status,
+            Pageable pageable
+    ) {
+        StatusRedacao statusRedacao = parseStatus(status);
+        return redacaoRepository.buscarHistorico(candidatoEmail, idProva, statusRedacao, pageable)
+                .map(this::toHistoricoResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public List<EvolucaoNotaResponse> evolucao(String candidatoEmail, Long idProva) {
+        return redacaoRepository.buscarEvolucao(
+                        candidatoEmail,
+                        StatusRedacao.CONCLUIDA,
+                        idProva,
+                        PageRequest.of(0, 30)
+                ).stream()
+                .filter(redacao -> redacao.getResultado() != null)
+                .map(this::toEvolucaoResponse)
+                .toList();
+    }
+
     @Transactional
     public RedacaoResponse reenviar(String candidatoEmail, Long id) {
         Redacao redacao = redacaoRepository.findWithCandidatoAndResultadoById(id)
@@ -159,6 +193,58 @@ public class RedacaoService {
     private User buscarCandidato(String candidatoEmail) {
         return userRepository.findByEmail(candidatoEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("Candidato nao encontrado"));
+    }
+
+    private HistoricoRedacaoResponse toHistoricoResponse(Redacao redacao) {
+        ResultadoCorrecao resultado = redacao.getResultado();
+        ConfiguracaoProva prova = redacao.getProva();
+
+        return new HistoricoRedacaoResponse(
+                redacao.getId(),
+                redacao.getTitulo(),
+                redacao.getTema(),
+                prova.getCargo(),
+                prova.getBanca(),
+                prova.getEstado(),
+                redacao.getStatus(),
+                resultado == null ? null : resultado.getNotaTotal(),
+                resultado == null ? null : resultado.getNotaMaximaProva(),
+                resultado == null ? null : resultado.getPercentualAproveitamento(),
+                redacao.getCreatedAt()
+        );
+    }
+
+    private EvolucaoNotaResponse toEvolucaoResponse(Redacao redacao) {
+        ResultadoCorrecao resultado = redacao.getResultado();
+        LocalDate data = redacao.getCreatedAt().atZoneSameInstant(ZONE_ID).toLocalDate();
+
+        return new EvolucaoNotaResponse(
+                data,
+                resultado.getPercentualAproveitamento(),
+                resultado.getNotaTotal(),
+                resultado.getNotaMaximaProva()
+        );
+    }
+
+    private StatusRedacao parseStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return null;
+        }
+
+        try {
+            return StatusRedacao.valueOf(status.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            throw new BusinessException("Status de redacao invalido");
+        }
+    }
+
+    private String resolveTitulo(SubmissaoRedacaoRequest request) {
+        if (request.titulo() != null && !request.titulo().isBlank()) {
+            return request.titulo().trim();
+        }
+
+        String tema = request.tema().trim();
+        return tema.length() <= 180 ? tema : tema.substring(0, 180);
     }
 
     private String toJson(AiCorrectionResult result) {

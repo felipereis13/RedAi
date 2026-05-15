@@ -12,7 +12,6 @@ public record SubmissaoRedacaoRequest(
         @Size(max = 220, message = "Tema deve ter no maximo 220 caracteres")
         String tema,
 
-        @NotBlank(message = "Titulo da redacao e obrigatorio")
         @Size(max = 180, message = "Titulo deve ter no maximo 180 caracteres")
         String titulo,
 

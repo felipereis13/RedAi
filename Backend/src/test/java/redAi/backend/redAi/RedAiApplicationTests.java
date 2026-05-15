@@ -1,6 +1,16 @@
 package redAi.backend.redAi;
 
 import com.jayway.jsonpath.JsonPath;
+import redAi.backend.redAi.model.entity.ConfiguracaoProva;
+import redAi.backend.redAi.model.entity.Redacao;
+import redAi.backend.redAi.model.entity.ResultadoCorrecao;
+import redAi.backend.redAi.model.entity.Role;
+import redAi.backend.redAi.model.entity.StatusRedacao;
+import redAi.backend.redAi.model.entity.User;
+import redAi.backend.redAi.repository.ConfiguracaoProvaRepository;
+import redAi.backend.redAi.repository.RedacaoRepository;
+import redAi.backend.redAi.repository.ResultadoCorrecaoRepository;
+import redAi.backend.redAi.repository.UserRepository;
 import redAi.backend.redAi.security.JwtUtil;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +36,18 @@ class RedAiApplicationTests {
 
 	@Autowired
 	private JwtUtil jwtUtil;
+
+	@Autowired
+	private UserRepository userRepository;
+
+	@Autowired
+	private ConfiguracaoProvaRepository provaRepository;
+
+	@Autowired
+	private RedacaoRepository redacaoRepository;
+
+	@Autowired
+	private ResultadoCorrecaoRepository resultadoCorrecaoRepository;
 
 	@Test
 	void contextLoads() {
@@ -258,6 +280,90 @@ class RedAiApplicationTests {
 								"""))
 				.andExpect(status().is(422))
 				.andExpect(jsonPath("$.message").value("A soma das notas máximas dos critérios não pode ultrapassar a nota máxima da prova"));
+	}
+
+	@Test
+	void historicoEEvolucaoDoCandidatoFuncionamComFiltros() throws Exception {
+		User candidato = userRepository.save(User.builder()
+				.nome("Candidato Historico")
+				.email("historico@example.com")
+				.senha("hash")
+				.role(Role.CANDIDATO)
+				.build());
+		ConfiguracaoProva prova = provaRepository.save(ConfiguracaoProva.builder()
+				.cargo("Analista")
+				.banca("FGV")
+				.estado("SP")
+				.descricao("Discursiva")
+				.notaMaxima(10.0)
+				.quantidadeLinhas(30)
+				.ativo(true)
+				.build());
+		ConfiguracaoProva outraProva = provaRepository.save(ConfiguracaoProva.builder()
+				.cargo("Tecnico")
+				.banca("FCC")
+				.estado("RJ")
+				.descricao("Redacao")
+				.notaMaxima(100.0)
+				.quantidadeLinhas(40)
+				.ativo(true)
+				.build());
+
+		Redacao concluida = redacaoRepository.save(Redacao.builder()
+				.titulo("Tema principal")
+				.tema("Tema principal")
+				.texto("Texto concluido")
+				.status(StatusRedacao.CONCLUIDA)
+				.candidato(candidato)
+				.prova(prova)
+				.build());
+		ResultadoCorrecao resultado = resultadoCorrecaoRepository.save(ResultadoCorrecao.builder()
+				.notaTotal(8.0)
+				.notaMaximaProva(10.0)
+				.percentualAproveitamento(80.0)
+				.feedbackGeral("Bom desempenho")
+				.avaliacoesCriterios("[]")
+				.redacao(concluida)
+				.build());
+		concluida.setResultado(resultado);
+		redacaoRepository.save(concluida);
+
+		redacaoRepository.save(Redacao.builder()
+				.titulo("Tema pendente")
+				.tema("Tema pendente")
+				.texto("Texto pendente")
+				.status(StatusRedacao.PENDENTE)
+				.candidato(candidato)
+				.prova(outraProva)
+				.build());
+
+		String token = jwtUtil.generateToken(candidato.getEmail(), "CANDIDATO");
+
+		mockMvc.perform(get("/api/candidato/redacoes/historico")
+						.param("idProva", String.valueOf(prova.getId()))
+						.param("status", "CONCLUIDA")
+						.param("pagina", "0")
+						.param("tamanho", "10")
+						.header("Authorization", "Bearer " + token))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.content.length()").value(1))
+				.andExpect(jsonPath("$.content[0].id").value(concluida.getId()))
+				.andExpect(jsonPath("$.content[0].cargo").value("Analista"))
+				.andExpect(jsonPath("$.content[0].banca").value("FGV"))
+				.andExpect(jsonPath("$.content[0].estado").value("SP"))
+				.andExpect(jsonPath("$.content[0].status").value("CONCLUIDA"))
+				.andExpect(jsonPath("$.content[0].notaTotal").value(8.0))
+				.andExpect(jsonPath("$.content[0].percentualAproveitamento").value(80.0));
+
+		mockMvc.perform(get("/api/candidato/redacoes/evolucao")
+						.param("idProva", String.valueOf(prova.getId()))
+						.header("Authorization", "Bearer " + token))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.length()").value(1))
+				.andExpect(jsonPath("$[0].data").isString())
+				.andExpect(jsonPath("$[0].percentualAproveitamento").value(80.0))
+				.andExpect(jsonPath("$[0].notaTotal").value(8.0))
+				.andExpect(jsonPath("$[0].notaMaximaProva").value(10.0));
 	}
 
 }
