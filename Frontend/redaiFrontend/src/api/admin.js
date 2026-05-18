@@ -19,8 +19,17 @@ export async function desativarProva(id) {
   await api.delete(`/api/admin/provas/${id}`)
 }
 
+export async function excluirProva(id) {
+  await api.delete(`/api/admin/provas/${id}/permanente`)
+}
+
 export async function listarEspelhosProva(idProva) {
   const response = await api.get(`/api/admin/provas/${idProva}/espelhos`)
+  return response.data
+}
+
+export async function listarRedacoesProva(idProva) {
+  const response = await api.get(`/api/admin/provas/${idProva}/redacoes`)
   return response.data
 }
 
@@ -33,6 +42,10 @@ export async function criarEspelhoProva(idProva, formData, onUploadProgress) {
 
 export async function excluirEspelhoProva(idProva, id) {
   await api.delete(`/api/admin/provas/${idProva}/espelhos/${id}`)
+}
+
+export async function excluirRedacaoAdmin(id) {
+  await api.delete(`/api/admin/redacoes/${id}`)
 }
 
 export async function criarSugestaoTema(idProva, payload) {

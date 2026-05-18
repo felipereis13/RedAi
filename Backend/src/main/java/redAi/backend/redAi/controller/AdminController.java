@@ -3,12 +3,15 @@ package redAi.backend.redAi.controller;
 import redAi.backend.redAi.model.dto.request.ProvaRequest;
 import redAi.backend.redAi.model.dto.request.SugestaoTemaRequest;
 import redAi.backend.redAi.model.dto.response.EspelhoCorrecaoResponse;
+import redAi.backend.redAi.model.dto.response.HistoricoRedacaoResponse;
 import redAi.backend.redAi.model.dto.response.ProvaResponse;
 import redAi.backend.redAi.model.dto.response.SugestaoTemaResponse;
 import redAi.backend.redAi.model.entity.TipoEspelhoCorrecao;
 import redAi.backend.redAi.service.EspelhoCorrecaoService;
 import redAi.backend.redAi.service.ProvaService;
+import redAi.backend.redAi.service.RedacaoService;
 import redAi.backend.redAi.service.SugestaoTemaService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -33,15 +36,18 @@ public class AdminController {
     private final ProvaService provaService;
     private final SugestaoTemaService sugestaoTemaService;
     private final EspelhoCorrecaoService espelhoCorrecaoService;
+    private final RedacaoService redacaoService;
 
     public AdminController(
             ProvaService provaService,
             SugestaoTemaService sugestaoTemaService,
-            EspelhoCorrecaoService espelhoCorrecaoService
+            EspelhoCorrecaoService espelhoCorrecaoService,
+            RedacaoService redacaoService
     ) {
         this.provaService = provaService;
         this.sugestaoTemaService = sugestaoTemaService;
         this.espelhoCorrecaoService = espelhoCorrecaoService;
+        this.redacaoService = redacaoService;
     }
 
     @GetMapping("/provas")
@@ -65,6 +71,13 @@ public class AdminController {
     @DeleteMapping("/provas/{id}")
     public ResponseEntity<Void> desativarProva(@PathVariable Long id) {
         provaService.desativar(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Exclui permanentemente uma prova sem redações enviadas")
+    @DeleteMapping("/provas/{id}/permanente")
+    public ResponseEntity<Void> excluirProva(@PathVariable Long id) {
+        provaService.excluir(id);
         return ResponseEntity.noContent().build();
     }
 
@@ -122,6 +135,19 @@ public class AdminController {
     @DeleteMapping("/provas/{idProva}/espelhos/{id}")
     public ResponseEntity<Void> excluirEspelho(@PathVariable Long idProva, @PathVariable Long id) {
         espelhoCorrecaoService.excluir(idProva, id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Lista as redações enviadas para uma prova")
+    @GetMapping("/provas/{idProva}/redacoes")
+    public ResponseEntity<List<HistoricoRedacaoResponse>> listarRedacoesDaProva(@PathVariable Long idProva) {
+        return ResponseEntity.ok(redacaoService.listarPorProvaAdmin(idProva));
+    }
+
+    @Operation(summary = "Exclui uma redação e seu resultado de correção")
+    @DeleteMapping("/redacoes/{id}")
+    public ResponseEntity<Void> excluirRedacao(@PathVariable Long id) {
+        redacaoService.excluirPorAdmin(id);
         return ResponseEntity.noContent().build();
     }
 }

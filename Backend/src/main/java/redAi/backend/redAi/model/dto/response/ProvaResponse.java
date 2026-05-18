@@ -21,6 +21,7 @@ public class ProvaResponse {
     private String descricao;
     private double notaMaxima;
     private Integer quantidadeLinhas;
+    private Integer limiteCaracteres;
     private boolean ativo;
     private List<CriterioCorrecaoResponse> criterios;
 
@@ -33,10 +34,15 @@ public class ProvaResponse {
                 .descricao(prova.getDescricao())
                 .notaMaxima(prova.getNotaMaxima())
                 .quantidadeLinhas(prova.getQuantidadeLinhas())
+                .limiteCaracteres(calcularLimiteCaracteres(prova))
                 .ativo(prova.isAtivo())
                 .criterios(prova.getCriterios().stream()
                         .map(CriterioCorrecaoResponse::fromEntity)
                         .toList())
                 .build();
+    }
+
+    private static int calcularLimiteCaracteres(ConfiguracaoProva prova) {
+        return prova.getQuantidadeLinhas() * 80;
     }
 }

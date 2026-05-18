@@ -11,13 +11,14 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { FileText, ListChecks, RefreshCw, UsersRound, X } from 'lucide-react'
+import { FileText, ListChecks, RefreshCw, Trash2, UsersRound, X } from 'lucide-react'
 import {
   buscarAtividadeRecente,
   buscarDashboardResumo,
   buscarRankingProvas,
   buscarRedacoesPorDia,
   criarSugestaoTema,
+  excluirRedacaoAdmin,
   listarProvasAdmin,
 } from '../api/admin'
 import Badge from '../components/Badge'
@@ -41,6 +42,8 @@ function AdminDashboard() {
   const [atividadeRecente, setAtividadeRecente] = useState(initialSection)
   const [refreshing, setRefreshing] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
+  const [redacaoParaExcluir, setRedacaoParaExcluir] = useState(null)
+  const [deletingRedacao, setDeletingRedacao] = useState(false)
 
   const carregarDashboard = useCallback(async ({ silent = false } = {}) => {
     if (!silent) {
@@ -75,6 +78,29 @@ function AdminDashboard() {
       window.clearInterval(intervalId)
     }
   }, [carregarDashboard])
+
+  const confirmarExclusaoRedacao = async () => {
+    if (!redacaoParaExcluir) {
+      return
+    }
+
+    setDeletingRedacao(true)
+
+    try {
+      await excluirRedacaoAdmin(redacaoParaExcluir.id)
+      setAtividadeRecente((current) => ({
+        ...current,
+        data: (current.data || []).filter((atividade) => atividade.id !== redacaoParaExcluir.id),
+      }))
+      setRedacaoParaExcluir(null)
+      toast?.showToast('Redação excluída com sucesso', 'success')
+    } catch (requestError) {
+      setRedacaoParaExcluir(null)
+      toast?.showToast(requestError.response?.data?.message || 'Nao foi possivel excluir a redacao.', 'error')
+    } finally {
+      setDeletingRedacao(false)
+    }
+  }
 
   const metrics = useMemo(() => [
     {
@@ -204,11 +230,12 @@ function AdminDashboard() {
                   <th>Nota</th>
                   <th>Aproveitamento</th>
                   <th>Data</th>
+                  <th>Acoes</th>
                 </tr>
               </thead>
               <tbody>
-                {atividadeRecente.data.map((atividade, index) => (
-                  <tr key={`${atividade.nomeCandidato}-${atividade.createdAt}-${index}`}>
+                {atividadeRecente.data.map((atividade) => (
+                  <tr key={atividade.id}>
                     <td>{atividade.nomeCandidato}</td>
                     <td>{atividade.cargo} - {atividade.banca}</td>
                     <td>
@@ -228,6 +255,19 @@ function AdminDashboard() {
                       )}
                     </td>
                     <td>{formatDateTime(atividade.createdAt)}</td>
+                    <td>
+                      <div className="tableActions">
+                        <Button
+                          aria-label="Excluir redação"
+                          className="iconButton"
+                          disabled={deletingRedacao}
+                          variant="danger"
+                          onClick={() => setRedacaoParaExcluir(atividade)}
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -253,6 +293,33 @@ function AdminDashboard() {
             setModalOpen(false)
           }}
         />
+      )}
+
+      {redacaoParaExcluir && (
+        <div className="modalBackdrop" role="presentation">
+          <Card className="quickModal" role="dialog" aria-modal="true" aria-labelledby="delete-redacao-title">
+            <div className="modalHeader">
+              <div>
+                <p className="eyebrow">Excluir redacao</p>
+                <h2 id="delete-redacao-title">Excluir redação</h2>
+                <p className="muted">
+                  Esta ação é irreversível. A redação e seu resultado de correção serão excluídos permanentemente.
+                </p>
+              </div>
+              <Button aria-label="Fechar" disabled={deletingRedacao} variant="ghost" onClick={() => setRedacaoParaExcluir(null)}>
+                <X size={18} />
+              </Button>
+            </div>
+            <div className="buttonGroup">
+              <Button disabled={deletingRedacao} variant="secondary" onClick={() => setRedacaoParaExcluir(null)}>
+                Cancelar
+              </Button>
+              <Button disabled={deletingRedacao} loading={deletingRedacao} variant="danger" onClick={confirmarExclusaoRedacao}>
+                Excluir permanentemente
+              </Button>
+            </div>
+          </Card>
+        </div>
       )}
     </section>
   )

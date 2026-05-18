@@ -256,6 +256,132 @@ class RedAiApplicationTests {
 	}
 
 	@Test
+	void adminListaRedacoesDeUmaProva() throws Exception {
+		User candidato = userRepository.save(User.builder()
+				.nome("Candidato Lista")
+				.email("lista.redacoes@example.com")
+				.senha("hash")
+				.role(Role.CANDIDATO)
+				.build());
+		ConfiguracaoProva prova = provaRepository.save(ConfiguracaoProva.builder()
+				.cargo("Analista Lista")
+				.banca("FGV")
+				.estado("SP")
+				.descricao("Discursiva")
+				.notaMaxima(10.0)
+				.quantidadeLinhas(30)
+				.ativo(true)
+				.build());
+		Redacao redacao = redacaoRepository.save(Redacao.builder()
+				.titulo("Tema lista")
+				.tema("Tema lista")
+				.texto("Texto listado")
+				.status(StatusRedacao.PENDENTE)
+				.candidato(candidato)
+				.prova(prova)
+				.build());
+
+		String adminToken = jwtUtil.generateToken("admin.lista@example.com", "ADMIN");
+
+		mockMvc.perform(get("/api/admin/provas/{idProva}/redacoes", prova.getId())
+						.header("Authorization", "Bearer " + adminToken))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.length()").value(1))
+				.andExpect(jsonPath("$[0].id").value(redacao.getId()))
+				.andExpect(jsonPath("$[0].tema").value("Tema lista"))
+				.andExpect(jsonPath("$[0].status").value("PENDENTE"));
+	}
+
+	@Test
+	void adminExcluiRedacaoEResultadoComSucesso() throws Exception {
+		User candidato = userRepository.save(User.builder()
+				.nome("Candidato Exclusao")
+				.email("exclusao@example.com")
+				.senha("hash")
+				.role(Role.CANDIDATO)
+				.build());
+		ConfiguracaoProva prova = provaRepository.save(ConfiguracaoProva.builder()
+				.cargo("Analista Exclusao")
+				.banca("FGV")
+				.estado("SP")
+				.descricao("Discursiva")
+				.notaMaxima(10.0)
+				.quantidadeLinhas(30)
+				.ativo(true)
+				.build());
+		Redacao redacao = redacaoRepository.save(Redacao.builder()
+				.titulo("Tema exclusao")
+				.tema("Tema exclusao")
+				.texto("Texto para excluir")
+				.status(StatusRedacao.CONCLUIDA)
+				.candidato(candidato)
+				.prova(prova)
+				.build());
+		ResultadoCorrecao resultado = resultadoCorrecaoRepository.save(ResultadoCorrecao.builder()
+				.notaTotal(8.0)
+				.notaMaximaProva(10.0)
+				.percentualAproveitamento(80.0)
+				.feedbackGeral("Bom desempenho")
+				.avaliacoesCriterios("[]")
+				.redacao(redacao)
+				.build());
+		redacao.setResultado(resultado);
+		redacaoRepository.save(redacao);
+
+		String adminToken = jwtUtil.generateToken("admin.exclusao@example.com", "ADMIN");
+
+		mockMvc.perform(delete("/api/admin/redacoes/{id}", redacao.getId())
+						.header("Authorization", "Bearer " + adminToken))
+				.andExpect(status().isNoContent());
+
+		org.assertj.core.api.Assertions.assertThat(redacaoRepository.existsById(redacao.getId())).isFalse();
+		org.assertj.core.api.Assertions.assertThat(resultadoCorrecaoRepository.existsById(resultado.getId())).isFalse();
+	}
+
+	@Test
+	void adminNaoExcluiRedacaoEmProcessamento() throws Exception {
+		User candidato = userRepository.save(User.builder()
+				.nome("Candidato Processando")
+				.email("processando@example.com")
+				.senha("hash")
+				.role(Role.CANDIDATO)
+				.build());
+		ConfiguracaoProva prova = provaRepository.save(ConfiguracaoProva.builder()
+				.cargo("Analista Processando")
+				.banca("FGV")
+				.estado("SP")
+				.descricao("Discursiva")
+				.notaMaxima(10.0)
+				.quantidadeLinhas(30)
+				.ativo(true)
+				.build());
+		Redacao redacao = redacaoRepository.save(Redacao.builder()
+				.titulo("Tema processando")
+				.tema("Tema processando")
+				.texto("Texto em processamento")
+				.status(StatusRedacao.PROCESSANDO)
+				.candidato(candidato)
+				.prova(prova)
+				.build());
+
+		String adminToken = jwtUtil.generateToken("admin.processando@example.com", "ADMIN");
+
+		mockMvc.perform(delete("/api/admin/redacoes/{id}", redacao.getId())
+						.header("Authorization", "Bearer " + adminToken))
+				.andExpect(status().is(422))
+				.andExpect(jsonPath("$.message").value("Não é possível excluir uma redação com correção em andamento."));
+	}
+
+	@Test
+	void adminRecebe404AoExcluirRedacaoInexistente() throws Exception {
+		String adminToken = jwtUtil.generateToken("admin.naoexiste@example.com", "ADMIN");
+
+		mockMvc.perform(delete("/api/admin/redacoes/{id}", 999999L)
+						.header("Authorization", "Bearer " + adminToken))
+				.andExpect(status().isNotFound());
+	}
+
+	@Test
 	void criarProvaComSomaDosCriteriosAcimaDaNotaMaximaRetorna422() throws Exception {
 		String adminToken = jwtUtil.generateToken("admin@example.com", "ADMIN");
 

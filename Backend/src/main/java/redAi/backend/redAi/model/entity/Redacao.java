@@ -12,7 +12,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -35,7 +34,6 @@ public class Redacao {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Size(max = 5000)
     @Column(nullable = false, length = 5000)
     private String texto;
 

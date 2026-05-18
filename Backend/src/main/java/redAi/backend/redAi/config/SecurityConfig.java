@@ -3,6 +3,7 @@ package redAi.backend.redAi.config;
 import redAi.backend.redAi.security.JwtFilter;
 import redAi.backend.redAi.security.JwtUtil;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -20,15 +21,21 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
+    private final List<String> allowedOrigins;
 
-    public SecurityConfig(JwtUtil jwtUtil) {
+    public SecurityConfig(JwtUtil jwtUtil, @Value("${app.cors.allowed-origins}") String allowedOrigins) {
         this.jwtFilter = new JwtFilter(jwtUtil);
+        this.allowedOrigins = Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(origin -> !origin.isBlank())
+                .toList();
     }
 
     @Bean
@@ -45,6 +52,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()
+                        .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/candidato/**").hasRole("CANDIDATO")
@@ -57,7 +65,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+        configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization"));

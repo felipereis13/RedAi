@@ -8,6 +8,7 @@ import redAi.backend.redAi.model.dto.response.ProvaResponse;
 import redAi.backend.redAi.model.entity.ConfiguracaoProva;
 import redAi.backend.redAi.model.entity.CriterioCorrecao;
 import redAi.backend.redAi.repository.ConfiguracaoProvaRepository;
+import redAi.backend.redAi.repository.RedacaoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,9 +18,11 @@ import java.util.List;
 public class ProvaService {
 
     private final ConfiguracaoProvaRepository provaRepository;
+    private final RedacaoRepository redacaoRepository;
 
-    public ProvaService(ConfiguracaoProvaRepository provaRepository) {
+    public ProvaService(ConfiguracaoProvaRepository provaRepository, RedacaoRepository redacaoRepository) {
         this.provaRepository = provaRepository;
+        this.redacaoRepository = redacaoRepository;
     }
 
     @Transactional(readOnly = true)
@@ -77,6 +80,17 @@ public class ProvaService {
     public void desativar(Long id) {
         ConfiguracaoProva prova = buscarPorId(id);
         prova.setAtivo(false);
+    }
+
+    @Transactional
+    public void excluir(Long id) {
+        ConfiguracaoProva prova = buscarPorId(id);
+
+        if (redacaoRepository.existsByProvaId(id)) {
+            throw new BusinessException("Não é possível excluir uma prova com redações enviadas. Exclua as redações primeiro ou desative a prova.");
+        }
+
+        provaRepository.delete(prova);
     }
 
     private ConfiguracaoProva buscarPorId(Long id) {

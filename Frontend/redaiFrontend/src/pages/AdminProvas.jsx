@@ -16,8 +16,11 @@ import {
   criarProva,
   desativarProva,
   excluirEspelhoProva,
+  excluirProva,
+  excluirRedacaoAdmin,
   listarEspelhosProva,
   listarProvasAdmin,
+  listarRedacoesProva,
 } from '../api/admin'
 import Badge from '../components/Badge'
 import Button from '../components/Button'
@@ -52,8 +55,12 @@ function AdminProvas() {
   const [feedback, setFeedback] = useState(null)
   const [touched, setTouched] = useState({})
   const [espelhos, setEspelhos] = useState([])
+  const [redacoes, setRedacoes] = useState([])
   const [loadingEspelhos, setLoadingEspelhos] = useState(false)
+  const [loadingRedacoes, setLoadingRedacoes] = useState(false)
   const [removingItem, setRemovingItem] = useState(null)
+  const [redacaoParaExcluir, setRedacaoParaExcluir] = useState(null)
+  const [provaParaExcluir, setProvaParaExcluir] = useState(null)
   const toast = useToast()
 
   const somaCriterios = useMemo(
@@ -87,6 +94,22 @@ function AdminProvas() {
       toast?.showToast('Nao foi possivel carregar espelhos e modelos.', 'error')
     } finally {
       setLoadingEspelhos(false)
+    }
+  }
+
+  async function carregarRedacoes(idProva = editingId) {
+    if (!idProva) {
+      setRedacoes([])
+      return
+    }
+
+    setLoadingRedacoes(true)
+    try {
+      setRedacoes(await listarRedacoesProva(idProva))
+    } catch {
+      toast?.showToast('Nao foi possivel carregar as redacoes da prova.', 'error')
+    } finally {
+      setLoadingRedacoes(false)
     }
   }
 
@@ -152,6 +175,7 @@ function AdminProvas() {
     setForm(formInicial)
     setTouched({})
     setEspelhos([])
+    setRedacoes([])
   }
 
   const editarProva = (prova) => {
@@ -159,6 +183,7 @@ function AdminProvas() {
     setForm(provaToForm(prova))
     setFeedback(null)
     carregarEspelhos(prova.id)
+    carregarRedacoes(prova.id)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -192,6 +217,7 @@ function AdminProvas() {
         setFeedback({ type: 'success', message: 'Prova criada com sucesso. Agora voce pode adicionar espelhos e modelos.' })
         toast?.showToast('Prova criada com sucesso.', 'success')
         await carregarEspelhos(provaCriada.id)
+        await carregarRedacoes(provaCriada.id)
       }
 
       await carregarProvas()
@@ -245,6 +271,48 @@ function AdminProvas() {
       await carregarEspelhos(editingId)
     } catch {
       toast?.showToast('Nao foi possivel remover o item.', 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const confirmarExclusaoRedacao = async () => {
+    if (!redacaoParaExcluir) {
+      return
+    }
+
+    setSaving(true)
+    try {
+      await excluirRedacaoAdmin(redacaoParaExcluir.id)
+      setRedacoes((current) => current.filter((redacao) => redacao.id !== redacaoParaExcluir.id))
+      setRedacaoParaExcluir(null)
+      toast?.showToast('Redação excluída com sucesso', 'success')
+    } catch (error) {
+      setRedacaoParaExcluir(null)
+      toast?.showToast(error.response?.data?.message || 'Nao foi possivel excluir a redacao.', 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const confirmarExclusaoProva = async () => {
+    if (!provaParaExcluir) {
+      return
+    }
+
+    setSaving(true)
+
+    try {
+      await excluirProva(provaParaExcluir.id)
+      setProvas((current) => current.filter((prova) => prova.id !== provaParaExcluir.id))
+      if (editingId === provaParaExcluir.id) {
+        limparFormulario()
+      }
+      setProvaParaExcluir(null)
+      toast?.showToast('Prova excluída com sucesso.', 'success')
+    } catch (error) {
+      setProvaParaExcluir(null)
+      toast?.showToast(error.response?.data?.message || 'Nao foi possivel excluir a prova.', 'error')
     } finally {
       setSaving(false)
     }
@@ -458,6 +526,62 @@ function AdminProvas() {
           />
         </div>
 
+        {editingId && (
+          <section className="referenceCard">
+            <div className="referenceHeader">
+              <div className="referenceTitle">
+                <FileText size={20} />
+                <div>
+                  <h3>Redações enviadas para esta prova</h3>
+                  <span>{redacoes.length} redações encontradas</span>
+                </div>
+              </div>
+            </div>
+
+            {loadingRedacoes ? (
+              <SkeletonLoader rows={3} />
+            ) : redacoes.length === 0 ? (
+              <p className="muted">Nenhuma redação enviada para esta prova.</p>
+            ) : (
+              <div className="tableWrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Tema</th>
+                      <th>Status</th>
+                      <th>Nota</th>
+                      <th>Data</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {redacoes.map((redacao) => (
+                      <tr key={redacao.id}>
+                        <td>{redacao.tema || redacao.titulo || `Redação #${redacao.id}`}</td>
+                        <td>
+                          <Badge status={redacao.status} pulse={redacao.status === 'PROCESSANDO'}>
+                            {statusLabel(redacao.status)}
+                          </Badge>
+                        </td>
+                        <td>{redacao.status === 'CONCLUIDA' ? formatNumber(redacao.notaTotal) : '-'}</td>
+                        <td>{formatDateTime(redacao.createdAt)}</td>
+                        <td>
+                          <div className="tableActions">
+                            <Button disabled={saving} variant="danger" onClick={() => setRedacaoParaExcluir(redacao)}>
+                              <Trash2 size={16} />
+                              Excluir
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        )}
+
         <div className="formFooter">
           <span className="counter">
             {editingId ? `Editando prova #${editingId}` : 'Nova configuracao'}
@@ -512,11 +636,19 @@ function AdminProvas() {
                         Editar
                       </Button>
                       <Button
-                        variant="danger"
+                        variant="warning"
                         disabled={saving || !prova.ativo}
                         onClick={() => handleDesativar(prova)}
                       >
                         Desativar
+                      </Button>
+                      <Button
+                        variant="danger"
+                        disabled={saving}
+                        onClick={() => setProvaParaExcluir(prova)}
+                      >
+                        <Trash2 size={16} />
+                        Excluir
                       </Button>
                     </div>
                   </td>
@@ -546,6 +678,60 @@ function AdminProvas() {
               </Button>
               <Button disabled={saving} loading={saving} variant="danger" onClick={confirmarRemocao}>
                 Remover
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {redacaoParaExcluir && (
+        <div className="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="deleteEssayTitle">
+          <Card className="quickModal">
+            <div className="modalHeader">
+              <div>
+                <p className="eyebrow">Excluir redação</p>
+                <h2 id="deleteEssayTitle">Excluir redação</h2>
+                <p className="muted">
+                  Esta ação é irreversível. A redação e seu resultado de correção serão excluídos permanentemente.
+                </p>
+              </div>
+              <Button aria-label="Fechar" disabled={saving} variant="ghost" onClick={() => setRedacaoParaExcluir(null)}>
+                <X size={18} />
+              </Button>
+            </div>
+            <div className="buttonGroup">
+              <Button disabled={saving} variant="secondary" onClick={() => setRedacaoParaExcluir(null)}>
+                Cancelar
+              </Button>
+              <Button disabled={saving} loading={saving} variant="danger" onClick={confirmarExclusaoRedacao}>
+                Excluir permanentemente
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {provaParaExcluir && (
+        <div className="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="deleteExamTitle">
+          <Card className="quickModal">
+            <div className="modalHeader">
+              <div>
+                <p className="eyebrow">Excluir prova</p>
+                <h2 id="deleteExamTitle">Excluir prova</h2>
+                <p className="muted">
+                  Esta ação é irreversível. A prova, critérios, espelhos e modelos serão excluídos permanentemente se não houver redações enviadas.
+                </p>
+              </div>
+              <Button aria-label="Fechar" disabled={saving} variant="ghost" onClick={() => setProvaParaExcluir(null)}>
+                <X size={18} />
+              </Button>
+            </div>
+            <div className="buttonGroup">
+              <Button disabled={saving} variant="secondary" onClick={() => setProvaParaExcluir(null)}>
+                Cancelar
+              </Button>
+              <Button disabled={saving} loading={saving} variant="danger" onClick={confirmarExclusaoProva}>
+                Excluir permanentemente
               </Button>
             </div>
           </Card>
@@ -835,6 +1021,28 @@ function isQuantidadeLinhasValida(value) {
 
 function formatNumber(value) {
   return Number(value || 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 })
+}
+
+function formatDateTime(value) {
+  if (!value) {
+    return '-'
+  }
+
+  return new Intl.DateTimeFormat('pt-BR', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(new Date(value))
+}
+
+function statusLabel(status) {
+  const labels = {
+    PENDENTE: 'Pendente',
+    PROCESSANDO: 'Processando',
+    CONCLUIDA: 'Concluida',
+    ERRO: 'Erro',
+  }
+
+  return labels[status] || status
 }
 
 export default AdminProvas

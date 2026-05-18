@@ -120,6 +120,7 @@ public class DashboardService {
     private AtividadeRecenteResponse toAtividadeResponse(Redacao redacao) {
         ResultadoCorrecao resultado = redacao.getResultado();
         return new AtividadeRecenteResponse(
+                redacao.getId(),
                 redacao.getCandidato().getNome(),
                 redacao.getProva().getCargo(),
                 redacao.getProva().getBanca(),

@@ -1,2 +1,2 @@
 export { default } from './FolhaRedacao'
-export { default as useLinhaCount, countLinhas } from './useLinhaCount'
+export { default as useLinhaCount, calcularLinhasUsadas } from './useLinhaCount'

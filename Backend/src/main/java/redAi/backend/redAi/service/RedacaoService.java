@@ -24,6 +24,7 @@ import redAi.backend.redAi.service.ai.AiCorrectionResult;
 import redAi.backend.redAi.service.ai.AiCorrectionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -42,6 +43,7 @@ public class RedacaoService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RedacaoService.class);
     private static final int LIMITE_TENTATIVAS = 3;
+    private static final int CARACTERES_POR_LINHA = 80;
     private static final ZoneId ZONE_ID = ZoneId.of("America/Sao_Paulo");
 
     private final RedacaoRepository redacaoRepository;
@@ -80,6 +82,8 @@ public class RedacaoService {
         if (!prova.isAtivo()) {
             throw new BusinessException("Prova inativa nao aceita novas redacoes");
         }
+
+        validarLimiteCaracteres(request.texto(), prova);
 
         Redacao redacao = Redacao.builder()
                 .texto(request.texto().trim())
@@ -158,6 +162,17 @@ public class RedacaoService {
     }
 
     @Transactional(readOnly = true)
+    public List<HistoricoRedacaoResponse> listarPorProvaAdmin(Long idProva) {
+        if (!provaRepository.existsById(idProva)) {
+            throw new ResourceNotFoundException("Prova nao encontrada");
+        }
+
+        return redacaoRepository.findByProvaIdOrderByCreatedAtDesc(idProva).stream()
+                .map(this::toHistoricoResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public Page<HistoricoRedacaoResponse> historico(
             String candidatoEmail,
             Long idProva,
@@ -180,6 +195,28 @@ public class RedacaoService {
                 .filter(redacao -> redacao.getResultado() != null)
                 .map(this::toEvolucaoResponse)
                 .toList();
+    }
+
+    @Transactional
+    @CacheEvict(
+            cacheNames = {
+                    "dashboardResumo",
+                    "dashboardRedacoesPorDia",
+                    "dashboardRankingProvas",
+                    "dashboardAtividadeRecente"
+            },
+            allEntries = true
+    )
+    public void excluirPorAdmin(Long id) {
+        Redacao redacao = redacaoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Redacao nao encontrada"));
+
+        if (redacao.getStatus() == StatusRedacao.PROCESSANDO) {
+            throw new BusinessException("Não é possível excluir uma redação com correção em andamento.");
+        }
+
+        resultadoCorrecaoRepository.deleteByRedacaoId(redacao.getId());
+        redacaoRepository.delete(redacao);
     }
 
     @Transactional
@@ -265,6 +302,19 @@ public class RedacaoService {
 
         String tema = request.tema().trim();
         return tema.length() <= 180 ? tema : tema.substring(0, 180);
+    }
+
+    private void validarLimiteCaracteres(String texto, ConfiguracaoProva prova) {
+        int quantidadeLinhas = prova.getQuantidadeLinhas();
+        int limite = quantidadeLinhas * CARACTERES_POR_LINHA;
+
+        if (texto.length() > limite) {
+            throw new BusinessException(String.format(
+                    "O texto excede o limite de %d linhas × 80 caracteres (%d caracteres máximos para esta prova).",
+                    quantidadeLinhas,
+                    limite
+            ));
+        }
     }
 
     private String toJson(AiCorrectionResult result) {

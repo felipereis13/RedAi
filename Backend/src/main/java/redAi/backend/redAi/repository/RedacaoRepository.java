@@ -25,6 +25,9 @@ public interface RedacaoRepository extends JpaRepository<Redacao, Long> {
     List<Redacao> findByCandidatoEmailOrderByIdDesc(String candidatoEmail);
 
     @EntityGraph(attributePaths = {"prova", "resultado"})
+    List<Redacao> findByProvaIdOrderByCreatedAtDesc(Long idProva);
+
+    @EntityGraph(attributePaths = {"prova", "resultado"})
     List<Redacao> findTop5ByCandidatoEmailOrderByCreatedAtDesc(String candidatoEmail);
 
     @EntityGraph(attributePaths = {"prova", "resultado"})
@@ -62,6 +65,8 @@ public interface RedacaoRepository extends JpaRepository<Redacao, Long> {
     );
 
     long countByStatus(StatusRedacao status);
+
+    boolean existsByProvaId(Long idProva);
 
     @EntityGraph(attributePaths = {"prova"})
     List<Redacao> findByCreatedAtGreaterThanEqual(OffsetDateTime createdAt);

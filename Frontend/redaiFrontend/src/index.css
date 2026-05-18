@@ -236,6 +236,48 @@ h3 {
   backdrop-filter: blur(12px);
 }
 
+.submissionFooterActions,
+.draftBannerActions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.draftBanner {
+  align-items: center;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
+  border: 1px solid #f5a623;
+  border-radius: var(--radius);
+  background: #fefce8;
+  color: #6f4e00;
+  padding: 14px 16px;
+}
+
+.draftBanner svg {
+  color: #b7791f;
+}
+
+.draftBanner strong,
+.draftBanner span {
+  display: block;
+}
+
+.draftBanner strong {
+  color: #6f4e00;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.draftBanner span {
+  color: #8a5a00;
+  font-size: 12px;
+  font-weight: 700;
+  margin-top: 3px;
+}
+
 .fadeInStep {
   animation: fadeInUp 0.24s ease both;
 }
@@ -509,6 +551,16 @@ h3 {
   background: #dc2626;
 }
 
+.uiButton--warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.uiButton--warning:hover {
+  background: #fde68a;
+  color: #78350f;
+}
+
 .uiButton--ghost,
 .uiButton--ghostDanger {
   border: 1px solid transparent;
@@ -523,6 +575,12 @@ h3 {
 .uiButton--ghostDanger:hover {
   background: var(--danger-soft);
   color: var(--danger);
+}
+
+.iconButton {
+  width: 36px;
+  height: 36px;
+  padding: 0;
 }
 
 .card {
@@ -2190,12 +2248,30 @@ tr:last-child td {
   .buttonGroup,
   .uiButton,
   .fitButton,
-  .quickActions {
+  .quickActions,
+  .submissionFooterActions,
+  .draftBannerActions {
     width: 100%;
   }
 
-  .quickActions {
+  .quickActions,
+  .submissionFooterActions,
+  .draftBannerActions {
     align-items: stretch;
+  }
+
+  .submissionFooterActions,
+  .draftBannerActions {
+    flex-direction: column;
+  }
+
+  .draftBanner {
+    align-items: flex-start;
+    grid-template-columns: max-content minmax(0, 1fr);
+  }
+
+  .draftBannerActions {
+    grid-column: 1 / -1;
   }
 
   .candidateMetricGrid {

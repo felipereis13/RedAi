@@ -17,7 +17,6 @@ public record SubmissaoRedacaoRequest(
         String titulo,
 
         @NotBlank(message = "Texto da redacao e obrigatorio")
-        @Size(max = 5000, message = "Texto da redacao deve ter no maximo 5000 caracteres")
         @SemPromptInjection(message = "O texto da redação contém conteúdo não permitido.")
         String texto
 ) {
